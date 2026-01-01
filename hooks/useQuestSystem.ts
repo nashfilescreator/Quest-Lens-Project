@@ -7,7 +7,7 @@ import { generateAIQuests } from '../services/geminiService';
 import { calculateQuestRewards } from '../services/rewardService';
 
 export const useQuestSystem = (
-  stats: UserStats, 
+  stats: UserStats,
   setStats: any,
   settings: AppSettings,
   addNotification: (t: string, m: string, y: any) => void,
@@ -22,24 +22,24 @@ export const useQuestSystem = (
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const allQuests = useMemo(() => {
-      const combined = [...(stats.cachedAiQuests || []), ...communityQuests];
-      const seen = new Set();
-      return combined.filter(q => {
-          if (seen.has(q.id)) return false;
-          seen.add(q.id);
-          return true;
-      });
+    const combined = [...(stats.cachedAiQuests || []), ...communityQuests];
+    const seen = new Set();
+    return combined.filter(q => {
+      if (seen.has(q.id)) return false;
+      seen.add(q.id);
+      return true;
+    });
   }, [stats.cachedAiQuests, communityQuests]);
 
   const personalizedQuests = useMemo(() => {
     if (!stats || !stats.roleAffinity) return allQuests;
     return [...allQuests].sort((a, b) => {
-        let scoreA = 0, scoreB = 0;
-        if (stats.completedQuestIds?.includes(a.id)) scoreA -= 50000;
-        if (stats.completedQuestIds?.includes(b.id)) scoreB -= 50000;
-        if (stats.activeQuestIds?.includes(a.id)) scoreA += 10000;
-        if (stats.activeQuestIds?.includes(b.id)) scoreB += 10000;
-        return scoreB - scoreA;
+      let scoreA = 0, scoreB = 0;
+      if (stats.completedQuestIds?.includes(a.id)) scoreA -= 50000;
+      if (stats.completedQuestIds?.includes(b.id)) scoreB -= 50000;
+      if (stats.activeQuestIds?.includes(a.id)) scoreA += 10000;
+      if (stats.activeQuestIds?.includes(b.id)) scoreB += 10000;
+      return scoreB - scoreA;
     });
   }, [allQuests, stats]);
 
@@ -51,57 +51,63 @@ export const useQuestSystem = (
       if (newQuests?.length > 0) {
         setStats((prev: any) => ({ ...prev, cachedAiQuests: newQuests, lastAiQuestSync: Date.now() }));
         if (syncToBackend) {
-           await batchCreateQuests({ quests: newQuests.map(q => ({ ...q, creatorId: userId })) });
+          await batchCreateQuests({ quests: newQuests.map(q => ({ ...q, creatorId: userId })) });
         }
       }
     } catch (error) {
-        console.error("AI Refresh Failed:", error);
-    } finally { 
-        setIsRefreshing(false); 
+      console.error("AI Refresh Failed:", error);
+    } finally {
+      setIsRefreshing(false);
     }
   }, [isRefreshing, stats, settings, batchCreateQuests, setStats, userId]);
 
   const processQuestCompletion = useCallback(async (quest: Quest, storyStep?: StoryStep | null, capturedImage?: string) => {
     if (!stats || !convexUserId) return;
     const rewards = calculateQuestRewards(stats, quest, storyStep);
-    
+
     if (capturedImage) {
-        const isFinalStep = !quest.storyLine || (storyStep && storyStep.id === quest.storyLine.length);
-        const entry = {
-            id: `entry-${Date.now()}`, 
-            questTitle: storyStep ? `${quest.title}: ${storyStep.title}` : quest.title,
-            image: capturedImage, 
-            date: new Date().toLocaleDateString(), 
-            rewards: { xp: rewards.xp, coins: rewards.coins, influence: rewards.influence }
-        };
-        
-        await completeStepMutation({
-            userId: convexUserId,
-            questId: quest.id,
-            rewards,
-            journalEntry: entry,
-            isFinalStep
-        });
+      const isFinalStep = !quest.storyLine || (storyStep && storyStep.id === quest.storyLine.length);
+      const entry = {
+        id: `entry-${Date.now()}`,
+        questTitle: storyStep ? `${quest.title}: ${storyStep.title}` : quest.title,
+        image: capturedImage,
+        date: new Date().toLocaleDateString(),
+        rewards: { xp: rewards.xp, coins: rewards.coins, influence: rewards.influence }
+      };
+
+      await completeStepMutation({
+        userId: convexUserId,
+        questId: quest.id,
+        rewards,
+        journalEntry: entry,
+        isFinalStep
+      });
     }
     return rewards;
   }, [stats, convexUserId, completeStepMutation]);
 
   const createQuest = useCallback(async (quest: Partial<Quest>) => {
-      const finalQuest = {
-          ...quest,
-          creatorId: userId,
-          creator: stats.username,
-      };
-      return await singleCreateQuest({ quest: finalQuest });
+    const finalQuest = {
+      ...quest,
+      creatorId: userId,
+      creator: stats.username,
+    };
+    return await singleCreateQuest({ quest: finalQuest });
   }, [userId, stats.username, singleCreateQuest]);
 
-  return { 
-    quests: personalizedQuests, 
-    worldEvents: worldEvents, 
-    isRefreshing, 
-    refreshAIQuests, 
-    processQuestCompletion, 
-    createQuest, 
-    updateQuest: () => {} 
+  const updateQuestMutation = useMutation(api.quests.updateQuest);
+
+  const updateQuest = useCallback(async (id: string, updates: Partial<Quest>) => {
+    return await updateQuestMutation({ id: id as any, updates });
+  }, [updateQuestMutation]);
+
+  return {
+    quests: personalizedQuests,
+    worldEvents: worldEvents,
+    isRefreshing,
+    refreshAIQuests,
+    processQuestCompletion,
+    createQuest,
+    updateQuest
   };
 };

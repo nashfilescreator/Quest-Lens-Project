@@ -15,14 +15,16 @@ export const getByUid = query({
 export const getByIds = query({
   args: { uids: v.array(v.string()) },
   handler: async (ctx, args) => {
-    const users = [];
-    for (const uid of args.uids) {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_uid", (q) => q.eq("uid", uid))
-        .unique();
-      if (user) {
-        users.push({
+    const users = await Promise.all(
+      args.uids.map(async (uid) => {
+        const user = await ctx.db
+          .query("users")
+          .withIndex("by_uid", (q) => q.eq("uid", uid))
+          .unique();
+
+        if (!user) return null;
+
+        return {
           id: user.uid,
           username: user.username,
           avatarSeed: user.avatarSeed,
@@ -30,10 +32,11 @@ export const getByIds = query({
           level: user.level,
           xp: user.xp,
           status: 'online' as const,
-        });
-      }
-    }
-    return users;
+        };
+      })
+    );
+
+    return users.filter(u => u !== null);
   },
 });
 
@@ -111,7 +114,7 @@ export const purchaseItem = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user || user.coins < args.price) throw new Error("Insufficient funds");
-    
+
     const tx = {
       id: `tx-${Date.now()}`,
       amount: args.price,
@@ -133,13 +136,13 @@ export const craftItem = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return;
-    
+
     const currentMaterials = user.materials || [];
-    
+
     for (const ing of args.recipe.ingredients) {
       const userMat = currentMaterials.find((m: any) => m.id === ing.materialId);
       if (!userMat || userMat.count < ing.count) {
-          throw new Error(`Insufficient materials: ${ing.materialId}`);
+        throw new Error(`Insufficient materials: ${ing.materialId}`);
       }
     }
 
@@ -160,12 +163,12 @@ export const useSkill = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return;
-    
+
     const cooldowns = { ...user.skillCooldowns };
     const now = Date.now();
-    
+
     if (cooldowns[args.skill.id] && now < cooldowns[args.skill.id]) {
-        throw new Error("Skill is still recharging.");
+      throw new Error("Skill is still recharging.");
     }
 
     cooldowns[args.skill.id] = now + (args.skill.cooldown * 1000);
@@ -195,7 +198,7 @@ export const logDiscovery = mutation({
       image: args.image,
       discoveredAt: new Date().toLocaleDateString(),
     };
-    
+
     const roleAffinity = { ...user.roleAffinity };
     roleAffinity.Explorer = (roleAffinity.Explorer || 0) + 10;
 
@@ -294,3 +297,91 @@ export const declineFriendRequest = mutation({
     });
   },
 });
+
+// Remove a friend from both users' friend lists
+export const removeFriend = mutation({
+  args: { userUid: v.string(), friendUid: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.query("users").withIndex("by_uid", q => q.eq("uid", args.userUid)).unique();
+    const friend = await ctx.db.query("users").withIndex("by_uid", q => q.eq("uid", args.friendUid)).unique();
+    if (!user || !friend) return;
+
+    await ctx.db.patch(user._id, {
+      friends: user.friends.filter(uid => uid !== args.friendUid)
+    });
+    await ctx.db.patch(friend._id, {
+      friends: friend.friends.filter(uid => uid !== args.userUid)
+    });
+  },
+});
+
+// Cancel an outgoing friend request
+export const cancelOutgoingRequest = mutation({
+  args: { userUid: v.string(), targetUid: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.query("users").withIndex("by_uid", q => q.eq("uid", args.userUid)).unique();
+    const target = await ctx.db.query("users").withIndex("by_uid", q => q.eq("uid", args.targetUid)).unique();
+    if (!user || !target) return;
+
+    await ctx.db.patch(user._id, {
+      outgoingFriendRequests: user.outgoingFriendRequests.filter(uid => uid !== args.targetUid)
+    });
+    await ctx.db.patch(target._id, {
+      incomingFriendRequests: target.incomingFriendRequests.filter(uid => uid !== args.userUid)
+    });
+  },
+});
+
+// Update user's last active timestamp (for streak tracking)
+export const updateLastActive = mutation({
+  args: { uid: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.query("users").withIndex("by_uid", q => q.eq("uid", args.uid)).unique();
+    if (!user) return;
+
+    await ctx.db.patch(user._id, {
+      lastActiveAt: Date.now()
+    } as any);
+  },
+});
+
+// Get user stats summary for profile display
+export const getStats = query({
+  args: { uid: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.query("users").withIndex("by_uid", q => q.eq("uid", args.uid)).unique();
+    if (!user) return null;
+
+    return {
+      level: user.level,
+      xp: user.xp,
+      coins: user.coins,
+      streak: user.streak,
+      influence: user.influence,
+      rank: user.rank,
+      completedQuests: user.completedQuestIds?.length || 0,
+      artifacts: user.artifacts?.length || 0,
+      friends: user.friends?.length || 0,
+    };
+  },
+});
+
+// Search users by username (for friend search)
+export const searchByUsername = query({
+  args: { query: v.string(), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const users = await ctx.db
+      .query("users")
+      .withSearchIndex("search_username", (q) => q.search("username", args.query))
+      .take(args.limit || 20);
+
+    return users.map(u => ({
+      id: u.uid,
+      username: u.username,
+      avatarSeed: u.avatarSeed,
+      rank: u.rank,
+      level: u.level,
+    }));
+  },
+});
+

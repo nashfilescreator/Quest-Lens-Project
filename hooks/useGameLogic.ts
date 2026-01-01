@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { 
+import {
   UserStats, AppSettings, Quest, MarketItem, Recipe, ActiveBuff, DiscoveryResult, Skill
 } from '../types';
 import { INITIAL_STATS, INITIAL_SETTINGS, MARKET_ITEMS } from '../constants';
@@ -14,7 +14,11 @@ export const useGameLogic = (settings: AppSettings) => {
   const localUid = localStorage.getItem('questlens_local_uid') || 'anonymous';
   const user = useQuery(api.users.getByUid, { uid: localUid });
   const convexNotifications = useQuery(api.notifications.getByUser, { userId: localUid }) || [];
-  
+
+  // Loading state for better UX
+  const isLoading = user === undefined;
+  const isAuthenticated = !!user;
+
   const updateUserMutation = useMutation(api.users.update);
   const claimBonus = useMutation(api.users.claimDaily);
   const addConvexNotif = useMutation(api.notifications.add);
@@ -25,27 +29,51 @@ export const useGameLogic = (settings: AppSettings) => {
   const useSkillMutation = useMutation(api.users.useSkill);
   const craftMutation = useMutation(api.users.craftItem);
   const contributeEventMutation = useMutation(api.worldEvents.contribute);
+  const updateLastActiveMutation = useMutation(api.users.updateLastActive);
 
+  // Update last active timestamp on mount and periodically
+  useEffect(() => {
+    if (localUid !== 'anonymous') {
+      updateLastActiveMutation({ uid: localUid });
+
+      // Update every 5 minutes while active
+      const interval = setInterval(() => {
+        updateLastActiveMutation({ uid: localUid });
+      }, 5 * 60 * 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [localUid, updateLastActiveMutation]);
+
+  // Cloud-first stats - only fall back to initial if no user exists yet
   const stats: UserStats = useMemo(() => {
     if (user) return user as unknown as UserStats;
-    const saved = localStorage.getItem('questlens_user_profile');
-    if (saved) return JSON.parse(saved);
+    // Only use initial stats when user doesn't exist in Convex
     return { ...INITIAL_STATS, settings: settings || INITIAL_SETTINGS };
   }, [user, settings]);
 
-  const updateProfile = useCallback((updates: Partial<UserStats>) => {
+  const updateProfile = useCallback(async (updates: Partial<UserStats>) => {
     if (!user) return;
-    updateUserMutation({ id: user._id, updates });
+    try {
+      await updateUserMutation({ id: user._id, updates });
+    } catch (error) {
+      console.error('[Convex] Failed to update profile:', error);
+      playSound('error');
+    }
   }, [user, updateUserMutation]);
 
   const addNotification = useCallback(async (title: string, message: string, type: any) => {
+    try {
       await addConvexNotif({
-          userId: localUid,
-          title,
-          message,
-          type,
-          timestamp: 'Just now',
+        userId: localUid,
+        title,
+        message,
+        type,
+        timestamp: 'Just now',
       });
+    } catch (error) {
+      console.error('[Convex] Failed to add notification:', error);
+    }
   }, [localUid, addConvexNotif]);
 
   const {
@@ -55,29 +83,29 @@ export const useGameLogic = (settings: AppSettings) => {
     cancelJoinTeam
   } = useSocialSystem(stats, updateProfile, localUid);
 
-  const { 
+  const {
     quests, worldEvents, isRefreshing, refreshAIQuests, processQuestCompletion, createQuest, updateQuest
   } = useQuestSystem(stats, updateProfile, stats.settings, addNotification, localUid, user?._id);
 
   const handleDiscovery = useCallback(async (res: DiscoveryResult, img: string) => {
-      if (!user) return;
-      await logDiscoveryMutation({
-          userId: user._id,
-          discovery: res,
-          image: img
-      });
-      addNotification("Discovery Logged", `You found a ${res.rarity} artifact: ${res.name}`, "success");
+    if (!user) return;
+    await logDiscoveryMutation({
+      userId: user._id,
+      discovery: res,
+      image: img
+    });
+    addNotification("Discovery Logged", `You found a ${res.rarity} artifact: ${res.name}`, "success");
   }, [user, logDiscoveryMutation, addNotification]);
 
   const handlePurchase = useCallback(async (item: MarketItem) => {
-      if (!user || user.coins < item.price) return;
-      await purchaseMutation({
-          userId: user._id,
-          itemId: item.id,
-          price: item.price,
-          itemName: item.name
-      });
-      playSound('success');
+    if (!user || user.coins < item.price) return;
+    await purchaseMutation({
+      userId: user._id,
+      itemId: item.id,
+      price: item.price,
+      itemName: item.name
+    });
+    playSound('success');
   }, [user, purchaseMutation]);
 
   const claimDailyBonus = useCallback(async (reward: { type: 'coins' | 'xp', value: number }) => {
@@ -94,9 +122,9 @@ export const useGameLogic = (settings: AppSettings) => {
 
     let newBuff: ActiveBuff | null = null;
     if (itemId === 'boost_xp') {
-        newBuff = {
-            id: `buff-${Date.now()}`, name: "Double XP", type: 'xp_multiplier', value: 2.0, expiresAt: Date.now() + (3600 * 1000), icon: 'Zap'
-        };
+      newBuff = {
+        id: `buff-${Date.now()}`, name: "Double XP", type: 'xp_multiplier', value: 2.0, expiresAt: Date.now() + (3600 * 1000), icon: 'Zap'
+      };
     }
 
     const inventory = [...user.inventory];
@@ -105,11 +133,11 @@ export const useGameLogic = (settings: AppSettings) => {
     inventory.splice(index, 1);
 
     await updateUserMutation({
-        id: user._id,
-        updates: {
-            inventory,
-            activeBuffs: newBuff ? [...(user.activeBuffs || []), newBuff] : user.activeBuffs
-        }
+      id: user._id,
+      updates: {
+        inventory,
+        activeBuffs: newBuff ? [...(user.activeBuffs || []), newBuff] : user.activeBuffs
+      }
     });
     playSound('success');
   }, [user, updateUserMutation]);
@@ -141,19 +169,19 @@ export const useGameLogic = (settings: AppSettings) => {
 
   return useMemo(() => ({
     stats, setStats: updateProfile, quests, worldEvents, isRefreshing, refreshAIQuests,
-    team, posts, setPosts: sharePost, leaderboard, globalTeams, 
-    notifications: convexNotifications, 
-    markNotificationRead: (id: string) => markNotifRead({ id: id as any }), 
+    team, posts, setPosts: sharePost, leaderboard, globalTeams,
+    notifications: convexNotifications,
+    markNotificationRead: (id: string) => markNotifRead({ id: id as any }),
     clearAllNotifications: () => clearNotifs({ userId: localUid }),
     friends, friendRequests,
-    processQuestCompletion, handleDiscovery, 
-    handleCrafting, 
-    handleSocialAction, likePost, commentPost, updateTeamMission, 
-    cancelTeamMission, contributeToTeamMission, createTeam, joinTeam, manageTeamRequest, 
+    processQuestCompletion, handleDiscovery,
+    handleCrafting,
+    handleSocialAction, likePost, commentPost, updateTeamMission,
+    cancelTeamMission, contributeToTeamMission, createTeam, joinTeam, manageTeamRequest,
     handlePurchase, claimDailyBonus, createQuest, updateQuest,
-    handleUseItem, handleEquipItem: (id: string) => updateProfile({ equippedFrame: id }), 
-    handleUpdateProfile: (updates: any) => updateProfile(updates), 
-    handleUpdateSettings: (s: AppSettings) => updateProfile({ settings: s }), 
+    handleUseItem, handleEquipItem: (id: string) => updateProfile({ equippedFrame: id }),
+    handleUpdateProfile: (updates: any) => updateProfile(updates),
+    handleUpdateSettings: (s: AppSettings) => updateProfile({ settings: s }),
     userRank, kickMember,
     handleUseSkill, cancelJoinTeam, addNotification,
     contributeToWorldEvent

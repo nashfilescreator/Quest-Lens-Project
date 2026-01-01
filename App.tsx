@@ -77,11 +77,11 @@ const MemoizedDashboard = memo(Dashboard);
 
 export default function App() {
   const localUid = useMemo(() => localStorage.getItem('questlens_local_uid') || 'anonymous', []);
-  const { 
-    view, changeView, activeQuest, setActiveQuest, activeStoryStep, setActiveStoryStep, 
-    completionData, setCompletionData, discoveryContext, setDiscoveryContext, 
-    editingQuest, setEditingQuest, scannerMode, setScannerMode, 
-    activeModals, openModal, closeModal, activeToast, setToast, inspectedAgent, 
+  const {
+    view, changeView, activeQuest, setActiveQuest, activeStoryStep, setActiveStoryStep,
+    completionData, setCompletionData, discoveryContext, setDiscoveryContext,
+    editingQuest, setEditingQuest, scannerMode, setScannerMode,
+    activeModals, openModal, closeModal, activeToast, setToast, inspectedAgent,
     isCameraOpen, setIsCameraOpen, isTeamContribution, setIsTeamContribution
   } = useUIStore();
 
@@ -109,12 +109,12 @@ export default function App() {
   useEffect(() => {
     const isAuth = localStorage.getItem('questlens_authenticated') === 'true';
     if (isAuth && localUid !== 'anonymous') {
-        createUser({
-            uid: localUid,
-            username: stats.username,
-            avatarSeed: stats.avatarSeed,
-            initialStats: INITIAL_STATS
-        });
+      createUser({
+        uid: localUid,
+        username: stats.username,
+        avatarSeed: stats.avatarSeed,
+        initialStats: INITIAL_STATS
+      });
     }
   }, [localUid, stats.username, stats.avatarSeed, createUser]);
 
@@ -137,37 +137,37 @@ export default function App() {
   const handleValidationSuccess = useCallback(async (result: ValidationResult, capturedImage: string) => {
     closeModal('scanner');
     setIsCameraOpen(false);
-    
+
     if (view === 'duel') {
-        await reportVictory();
-        return;
+      await reportVictory();
+      return;
     }
 
     if (isTeamContribution) {
-        const res = await contributeToTeamMission(result.confidence);
-        setIsTeamContribution(false);
-        playSound('success');
-        if (res.isComplete) {
-            setCompletionData({ result: { success: true, message: "Team mission achieved!" }, image: capturedImage, rewards: { xp: 500, coins: 100 } });
-        } else {
-            setToast({ id: `team-${Date.now()}`, title: "Intel Uploaded", message: `+${res.amountAdded} mission progress.`, type: 'success', timestamp: 'Now', read: false });
-        }
-        return;
+      const res = await contributeToTeamMission(result.confidence);
+      setIsTeamContribution(false);
+      playSound('success');
+      if (res.isComplete) {
+        setCompletionData({ result: { success: true, message: "Team mission achieved!" }, image: capturedImage, rewards: { xp: 500, coins: 100 } });
+      } else {
+        setToast({ id: `team-${Date.now()}`, title: "Intel Uploaded", message: `+${res.amountAdded} mission progress.`, type: 'success', timestamp: 'Now', read: false });
+      }
+      return;
     }
 
     if (scannerMode === 'quest' && activeQuest) {
-        const rewards = await processQuestCompletion(activeQuest, activeStoryStep, capturedImage);
-        if (rewards?.levelUp) openModal('levelUp');
-        playSound('success');
-        setCompletionData({ result, image: capturedImage, rewards });
+      const rewards = await processQuestCompletion(activeQuest, activeStoryStep, capturedImage);
+      if (rewards?.levelUp) openModal('levelUp');
+      playSound('success');
+      setCompletionData({ result, image: capturedImage, rewards });
     } else if (scannerMode === 'free') {
-        try {
-            const discovery = await identifyDiscovery(capturedImage);
-            handleDiscovery(discovery, capturedImage);
-            setCompletionData({ discovery, result: { success: true, message: discovery.description }, image: capturedImage, rewards: { xp: discovery.xpValue, coins: 50 } });
-        } catch (e) {
-            setToast({ id: 'err', title: 'Error', message: 'Could not identify item.', type: 'error', timestamp: 'now', read: false });
-        }
+      try {
+        const discovery = await identifyDiscovery(capturedImage);
+        handleDiscovery(discovery, capturedImage);
+        setCompletionData({ discovery, result: { success: true, message: discovery.description }, image: capturedImage, rewards: { xp: discovery.xpValue, coins: 50 } });
+      } catch (e) {
+        setToast({ id: 'err', title: 'Error', message: 'Could not identify item.', type: 'error', timestamp: 'now', read: false });
+      }
     }
   }, [view, isTeamContribution, contributeToTeamMission, reportVictory, scannerMode, activeQuest, activeStoryStep, processQuestCompletion, handleDiscovery, closeModal, setIsCameraOpen, setIsTeamContribution, setCompletionData, setToast, openModal]);
 
@@ -182,8 +182,8 @@ export default function App() {
           <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-background"><Loader className="animate-spin text-primary" size={32} /></div>}>
             {view === 'onboarding' && <Onboarding onComplete={() => { localStorage.setItem('questLens_onboarded', 'true'); changeView('auth'); }} />}
             {view === 'auth' && <Auth onAuthenticated={(u) => { localStorage.setItem('questlens_authenticated', 'true'); changeView('role-selection'); }} />}
-            {view === 'role-selection' && <RoleSelection username={stats.username} onComplete={(roles) => { setStats((p: any) => ({...p, activeRoles: roles})); changeView('feed'); }} />}
-            {view === 'feed' && <MemoizedDashboard stats={stats} quests={quests} worldEvents={worldEvents} filter={'ALL'} setFilter={() => {}} onJoinQuest={handleJoinQuest} onEditQuest={(q) => { setEditingQuest(q); changeView('create'); }} onRefreshAIQuests={() => refreshAIQuests()} isRefreshing={isRefreshing} onContributeEvent={contributeToWorldEvent} />}
+            {view === 'role-selection' && <RoleSelection username={stats.username} onComplete={(roles) => { setStats((p: any) => ({ ...p, activeRoles: roles })); changeView('feed'); }} />}
+            {view === 'feed' && <MemoizedDashboard stats={stats} quests={quests} worldEvents={worldEvents} filter={'ALL'} setFilter={() => { }} onJoinQuest={handleJoinQuest} onEditQuest={(q) => { setEditingQuest(q); changeView('create'); }} onRefreshAIQuests={() => refreshAIQuests()} isRefreshing={isRefreshing} onContributeEvent={contributeToWorldEvent} />}
             {view === 'map' && <QuestRadar quests={quests} onQuestSelect={handleJoinQuest} openARLens={() => changeView('ar-lens')} userStats={stats} />}
             {view === 'ar-lens' && <ARLens onClose={() => changeView('map')} quests={quests} onQuestSelect={handleJoinQuest} activeBuffs={stats.activeBuffs} />}
             {view === 'active-quest' && activeQuest && <QuestDetail quest={activeQuest} isCompleted={stats.completedQuestIds.includes(activeQuest.id)} />}
@@ -198,12 +198,12 @@ export default function App() {
             {view === 'team-chat' && <TeamChat team={team} currentUserId={localUid} currentUsername={stats.username} currentUserAvatar={stats.avatarSeed} onBack={() => changeView('team')} />}
             {view === 'create' && <CreateQuest userStats={stats} initialData={discoveryContext} editingQuest={editingQuest} onQuestCreated={() => changeView('feed')} onCancel={() => changeView('feed')} />}
             {view === 'journal' && <QuestJournal stats={stats} onBack={() => changeView('profile')} />}
-            {view === 'oracle' && <Oracle initialHistory={[]} onUpdateHistory={() => {}} onClose={() => changeView('feed')} />}
+            {view === 'oracle' && <Oracle userId={localUid} onClose={() => changeView('feed')} />}
             {view === 'wallet' && <Wallet stats={stats} transactions={stats.transactions} onClose={() => changeView('profile')} onGoToShop={() => changeView('market')} />}
-            {view === 'market' && <Marketplace userStats={stats} items={quests.map(q => ({id: q.id, name: q.title, description: q.description, price: 100, category: 'powerup', image: q.coverImage || ''}))} onBuy={handlePurchase} onBack={() => changeView('wallet')} />}
+            {view === 'market' && <Marketplace userStats={stats} items={quests.map(q => ({ id: q.id, name: q.title, description: q.description, price: 100, category: 'powerup', image: q.coverImage || '' }))} onBuy={handlePurchase} onBack={() => changeView('wallet')} />}
             {view === 'duel' && <DuelLobby onStartDuel={() => setIsCameraOpen(true)} onCancel={() => changeView('social')} currentUser={stats as any} />}
           </Suspense>
-        </div>
+        </ErrorBoundary>
       </main>
 
       {showBottomBar && (
@@ -215,8 +215,8 @@ export default function App() {
             <MapPin size={22} strokeWidth={view === 'map' ? 2.5 : 2} /><span className="text-[9px] font-bold uppercase tracking-widest">Map</span>
           </button>
           <button onClick={() => openModal('lensMenu')} className="relative -top-6 group">
-             <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-primary/30 transition-transform duration-300 group-active:scale-90 ${activeModals.has('lensMenu') ? 'bg-white text-primary' : 'bg-primary text-white'}`}><Scan size={24} strokeWidth={2.5} /></div>
-             <span className="text-[9px] font-bold uppercase tracking-widest absolute -bottom-4 left-1/2 -translate-x-1/2 text-txt-dim group-hover:text-primary transition-colors whitespace-nowrap">Start Scan</span>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-primary/30 transition-transform duration-300 group-active:scale-90 ${activeModals.has('lensMenu') ? 'bg-white text-primary' : 'bg-primary text-white'}`}><Scan size={24} strokeWidth={2.5} /></div>
+            <span className="text-[9px] font-bold uppercase tracking-widest absolute -bottom-4 left-1/2 -translate-x-1/2 text-txt-dim group-hover:text-primary transition-colors whitespace-nowrap">Start Scan</span>
           </button>
           <button onClick={() => changeView('social')} className={`flex flex-col items-center gap-1 transition-all duration-300 active:scale-95 ${view === 'social' ? 'text-primary' : 'text-txt-dim hover:text-txt-sub'}`}>
             <Users size={22} strokeWidth={view === 'social' ? 2.5 : 2} /><span className="text-[9px] font-bold uppercase tracking-widest">Friends</span>
@@ -229,10 +229,10 @@ export default function App() {
 
       {activeModals.has('lensMenu') && (
         <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => closeModal('lensMenu')}>
-            <div className="absolute bottom-28 left-1/2 -translate-x-1/2 flex flex-col gap-3 w-full px-8 max-w-sm">
-                <button onClick={(e) => { e.stopPropagation(); handleOpenNewQuest(); closeModal('lensMenu'); }} className="w-full h-16 bg-gradient-to-r from-primary to-indigo-600 rounded-3xl flex items-center justify-between px-6 text-white font-black text-xs uppercase tracking-widest shadow-2xl active:scale-95 transition-all"><span>Create Quest</span><Sparkles size={20} /></button>
-                <button onClick={(e) => { e.stopPropagation(); setScannerMode('free'); setIsCameraOpen(true); closeModal('lensMenu'); }} className="w-full h-16 bg-surface border border-white/10 rounded-3xl flex items-center justify-between px-6 text-txt-main font-black text-xs uppercase tracking-widest shadow-2xl active:scale-95 transition-all hover:bg-white/5"><span>Start Scan</span><Scan size={20} /></button>
-            </div>
+          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 flex flex-col gap-3 w-full px-8 max-w-sm">
+            <button onClick={(e) => { e.stopPropagation(); handleOpenNewQuest(); closeModal('lensMenu'); }} className="w-full h-16 bg-gradient-to-r from-primary to-indigo-600 rounded-3xl flex items-center justify-between px-6 text-white font-black text-xs uppercase tracking-widest shadow-2xl active:scale-95 transition-all"><span>Create Quest</span><Sparkles size={20} /></button>
+            <button onClick={(e) => { e.stopPropagation(); setScannerMode('free'); setIsCameraOpen(true); closeModal('lensMenu'); }} className="w-full h-16 bg-surface border border-white/10 rounded-3xl flex items-center justify-between px-6 text-txt-main font-black text-xs uppercase tracking-widest shadow-2xl active:scale-95 transition-all hover:bg-white/5"><span>Start Scan</span><Scan size={20} /></button>
+          </div>
         </div>
       )}
 
@@ -240,32 +240,32 @@ export default function App() {
       {activeModals.has('levelUp') && <LevelUpModal newStats={stats} onClose={() => closeModal('levelUp')} />}
       {activeModals.has('inventory') && <InventoryModal userStats={stats} onUseItem={handleUseItem} onEquipItem={handleEquipItem} onOpenCrafting={() => { closeModal('inventory'); openModal('crafting'); }} onClose={() => closeModal('inventory')} />}
       {activeModals.has('notifications') && <NotificationCenter notifications={notifications} onClose={() => closeModal('notifications')} onClear={() => clearAllNotifications()} onMarkRead={(id) => markNotificationRead(id)} onAcceptInvite={(id) => respondToTeamInvite(id, true)} onDeclineInvite={(id) => respondToTeamInvite(id, false)} />}
-      {activeModals.has('agentProfile') && inspectedAgent && <AgentProfileModal agent={inspectedAgent} onClose={() => closeModal('agentProfile')} onAddFriend={() => handleSocialAction('send_request', inspectedAgent.id)} onDuel={() => changeView('duel')} onChat={() => {}} onCancelRequest={() => handleSocialAction('cancel_request', inspectedAgent.id)} />}
-      {activeModals.has('crafting') && <CraftingStation stats={stats} recipes={RECIPES} items={quests.map(q => ({id: q.id, name: q.title, description: q.description, price: 100, category: 'powerup', image: q.coverImage || ''}))} onCraft={handleCrafting} onClose={() => closeModal('crafting')} />}
+      {activeModals.has('agentProfile') && inspectedAgent && <AgentProfileModal agent={inspectedAgent} onClose={() => closeModal('agentProfile')} onAddFriend={() => handleSocialAction('send_request', inspectedAgent.id)} onDuel={() => changeView('duel')} onChat={() => { }} onCancelRequest={() => handleSocialAction('cancel_request', inspectedAgent.id)} />}
+      {activeModals.has('crafting') && <CraftingStation stats={stats} recipes={RECIPES} items={quests.map(q => ({ id: q.id, name: q.title, description: q.description, price: 100, category: 'powerup', image: q.coverImage || '' }))} onCraft={handleCrafting} onClose={() => closeModal('crafting')} />}
 
       {isCameraOpen && <CameraCapture objective={scannerMode === 'free' ? "Anything interesting" : (activeStoryStep?.imagePrompt || activeQuest?.imagePrompt || "Item")} onClose={() => setIsCameraOpen(false)} onSuccess={handleValidationSuccess} userStats={stats} />}
-      
+
       {completionData && (
-          <QuestCompletion 
-            quest={completionData.discovery ? null : activeQuest} discovery={completionData.discovery} validation={completionData.result} capturedImage={completionData.image} rewards={completionData.rewards} 
-            onShare={(caption) => {
-                const newPost: any = { 
-                    userId: localUid, 
-                    username: stats.username, 
-                    avatarSeed: stats.avatarSeed, 
-                    questTitle: completionData.discovery?.name || activeQuest?.title || "Discovery", 
-                    caption, 
-                    image: completionData.image, 
-                    likes: 0, 
-                    likedBy: [], 
-                    timeAgo: 'Just now', 
-                    userRank: stats.rank 
-                };
-                setPosts({ post: newPost });
-                setCompletionData(null);
-                setToast({ id: 'share', title: 'Shared', message: 'Discovery posted to community feed.', type: 'success', timestamp: 'now', read: false });
-            }} onClose={() => setCompletionData(null)} activeRoles={stats.activeRoles} 
-          />
+        <QuestCompletion
+          quest={completionData.discovery ? null : activeQuest} discovery={completionData.discovery} validation={completionData.result} capturedImage={completionData.image} rewards={completionData.rewards}
+          onShare={(caption) => {
+            const newPost: any = {
+              userId: localUid,
+              username: stats.username,
+              avatarSeed: stats.avatarSeed,
+              questTitle: completionData.discovery?.name || activeQuest?.title || "Discovery",
+              caption,
+              image: completionData.image,
+              likes: 0,
+              likedBy: [],
+              timeAgo: 'Just now',
+              userRank: stats.rank
+            };
+            setPosts({ post: newPost });
+            setCompletionData(null);
+            setToast({ id: 'share', title: 'Shared', message: 'Discovery posted to community feed.', type: 'success', timestamp: 'now', read: false });
+          }} onClose={() => setCompletionData(null)} activeRoles={stats.activeRoles}
+        />
       )}
       <Toast notification={activeToast} onClose={() => setToast(null)} />
     </div>

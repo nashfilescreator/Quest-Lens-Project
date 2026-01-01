@@ -8,15 +8,21 @@ import { Loader } from 'lucide-react';
 /**
  * Convex Initialization
  * 
- * To resolve "[CONVEX FATAL ERROR] Couldn't parse deployment name", the client URL
- * must follow the cloud deployment pattern: https://<deployment-name>.convex.cloud
- * 'missing-url' is rejected by the internal parser; using a standard alphanumeric-hyphenated dummy.
+ * The VITE_CONVEX_URL environment variable must be set in .env.local
+ * Run `npx convex dev` to get your deployment URL
  */
-const rawUrl = process.env.CONVEX_URL;
-const isValidUrl = rawUrl && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'));
-const convexUrl = isValidUrl ? rawUrl : "https://dummy-deployment-999.convex.cloud";
+const convexUrl = import.meta.env.VITE_CONVEX_URL || process.env.CONVEX_URL;
 
-const convex = new ConvexReactClient(convexUrl);
+if (!convexUrl || convexUrl === 'undefined') {
+  console.warn(
+    '[Convex] No VITE_CONVEX_URL found. Running in offline mode.',
+    'To connect to Convex, run: npx convex dev'
+  );
+}
+
+const convex = new ConvexReactClient(
+  convexUrl || "https://placeholder-offline.convex.cloud"
+);
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
