@@ -3,7 +3,6 @@ const CACHE_NAME = 'quest-lens-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/index.tsx',
   '/manifest.json'
 ];
 
