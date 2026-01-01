@@ -291,7 +291,23 @@ function GameContent() {
 
 
 export default function App() {
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(() => {
+    // Check if we just refreshed for a sync in the last 60 seconds
+    const syncStart = localStorage.getItem('questlens_sync_start');
+    return syncStart ? (Date.now() - parseInt(syncStart)) < 60000 : false;
+  });
+
+  // Safety timer: if we're still "syncing" after 30 seconds, something is wrong (likely backend config)
+  // Let's reset and allow the user to see the login/error screen again.
+  useEffect(() => {
+    if (isSyncing) {
+      const timer = setTimeout(() => {
+        setIsSyncing(false);
+        localStorage.removeItem('questlens_sync_start');
+      }, 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSyncing]);
 
   return (
     <>
@@ -309,25 +325,29 @@ export default function App() {
             <Loader className="animate-spin text-primary mb-4" size={32} />
             <h2 className="text-xl font-bold mb-2">Syncing Security Protocol</h2>
             <p className="text-sm text-white/60 max-w-xs">Connecting to your secure vault. If this takes more than 10 seconds, please check your connection.</p>
+            <button
+              onClick={() => { setIsSyncing(false); localStorage.removeItem('questlens_sync_start'); }}
+              className="mt-8 text-[10px] uppercase tracking-[0.2em] font-bold text-white/40 hover:text-white transition-colors"
+            >
+              Cancel & Retry
+            </button>
           </div>
         ) : (
           <Auth onAuthenticated={() => {
             console.log("[App] Auth successful, triggering sync refresh...");
             setIsSyncing(true);
-            // We only refresh if we haven't just refreshed in the last 10 seconds
-            const lastSync = localStorage.getItem('questlens_last_sync');
-            const now = Date.now();
-            if (!lastSync || now - parseInt(lastSync) > 10000) {
-              localStorage.setItem('questlens_last_sync', now.toString());
-              window.location.reload();
-            }
+            localStorage.setItem('questlens_sync_start', Date.now().toString());
+            window.location.reload();
           }} />
         )}
       </Unauthenticated>
       <Authenticated>
         {(() => {
-          // Reset syncing flag when we successfully reach authenticated state
-          if (isSyncing) setIsSyncing(false);
+          // Success! Clear the syncing flag
+          if (isSyncing) {
+            setIsSyncing(false);
+            localStorage.removeItem('questlens_sync_start');
+          }
           return <GameContent />;
         })()}
       </Authenticated>
