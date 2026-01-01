@@ -15,9 +15,10 @@ export default function Auth({ onAuthenticated }: AuthProps) {
 
     const [mode, setMode] = useState<AuthMode>('signin');
 
-    // Auto-redirect if already logged in but stuck on this view
+    // Auto-detect existing session
     useEffect(() => {
         if (isAuthLoaded && userId) {
+            console.log("[Auth] Session detected for:", userId);
             onAuthenticated();
         }
     }, [isAuthLoaded, userId, onAuthenticated]);

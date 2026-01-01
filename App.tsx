@@ -288,26 +288,50 @@ function GameContent() {
   );
 }
 
+
+
 export default function App() {
+  const [isSyncing, setIsSyncing] = useState(false);
+
   return (
     <>
       <AuthLoading>
         <div className="fixed inset-0 flex items-center justify-center bg-[#020617] text-white">
           <div className="flex flex-col items-center gap-4">
             <Loader className="animate-spin text-primary" size={32} />
-            <p className="text-xs uppercase tracking-widest text-white/50">Loading Quest Lens...</p>
+            <p className="text-xs uppercase tracking-widest text-white/50">Establishing Connection...</p>
           </div>
         </div>
       </AuthLoading>
       <Unauthenticated>
-        <Auth onAuthenticated={() => {
-          localStorage.setItem('questlens_authenticated', 'true');
-          window.location.reload();
-        }} />
+        {isSyncing ? (
+          <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#020617] text-white p-6 text-center">
+            <Loader className="animate-spin text-primary mb-4" size={32} />
+            <h2 className="text-xl font-bold mb-2">Syncing Security Protocol</h2>
+            <p className="text-sm text-white/60 max-w-xs">Connecting to your secure vault. If this takes more than 10 seconds, please check your connection.</p>
+          </div>
+        ) : (
+          <Auth onAuthenticated={() => {
+            console.log("[App] Auth successful, triggering sync refresh...");
+            setIsSyncing(true);
+            // We only refresh if we haven't just refreshed in the last 10 seconds
+            const lastSync = localStorage.getItem('questlens_last_sync');
+            const now = Date.now();
+            if (!lastSync || now - parseInt(lastSync) > 10000) {
+              localStorage.setItem('questlens_last_sync', now.toString());
+              window.location.reload();
+            }
+          }} />
+        )}
       </Unauthenticated>
       <Authenticated>
-        <GameContent />
+        {(() => {
+          // Reset syncing flag when we successfully reach authenticated state
+          if (isSyncing) setIsSyncing(false);
+          return <GameContent />;
+        })()}
       </Authenticated>
     </>
   );
 }
+
