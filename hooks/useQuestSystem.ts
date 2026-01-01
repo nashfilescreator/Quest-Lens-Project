@@ -48,6 +48,17 @@ export const useQuestSystem = (
 
   const refreshAIQuests = useCallback(async (syncToBackend: boolean = false) => {
     if (isRefreshing || !stats) return;
+
+    // Add a cooldown check (e.g., 30 seconds) to prevent spamming
+    const COOLDOWN_MS = 30 * 1000;
+    const lastSync = stats.lastAiQuestSync || 0;
+    const timeSinceLastSync = Date.now() - lastSync;
+
+    if (timeSinceLastSync < COOLDOWN_MS && !syncToBackend) {
+      console.warn(`[AI Refresh] Rate limiting: Please wait ${Math.ceil((COOLDOWN_MS - timeSinceLastSync) / 1000)}s`);
+      return;
+    }
+
     setIsRefreshing(true);
     try {
       const newQuests = await generateAIQuests("Missions", settings.dailyQuestLimit, stats.rolePreferences, settings, stats.activeRoles);

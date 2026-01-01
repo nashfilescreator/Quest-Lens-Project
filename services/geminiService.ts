@@ -14,7 +14,7 @@ const cleanJson = (text: string | undefined): string => {
  */
 export async function identifyDiscovery(base64Image: string): Promise<DiscoveryResult> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+
   const imagePart = {
     inlineData: {
       mimeType: 'image/jpeg',
@@ -28,7 +28,7 @@ export async function identifyDiscovery(base64Image: string): Promise<DiscoveryR
     XP should scale with rarity (50 to 500). Use warm, neighborhood-friendly language.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents: { parts: [imagePart, { text: prompt }] },
     config: {
       responseMimeType: "application/json",
@@ -57,9 +57,9 @@ export async function generateAIQuests(
   preferredType?: QuestType
 ): Promise<Quest[]> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+
   const region = settings?.country || 'International';
-  
+
   const enhancedPrompt = `
     Act as a neighborhood guide and quest designer. 
     Task: Create exactly ${count} scavenger hunt quests.
@@ -91,11 +91,10 @@ export async function generateAIQuests(
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-1.5-pro',
     contents: enhancedPrompt,
     config: {
       responseMimeType: "application/json",
-      thinkingConfig: { thinkingBudget: 32768 },
       responseSchema: {
         type: Type.ARRAY,
         items: {
@@ -110,18 +109,18 @@ export async function generateAIQuests(
             imagePrompt: { type: Type.STRING, description: "Main object to find" },
             roleTags: { type: Type.ARRAY, items: { type: Type.STRING } },
             difficultyTier: { type: Type.NUMBER, description: "1-5" },
-            storyLine: { 
-                type: Type.ARRAY, 
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        id: { type: Type.NUMBER },
-                        title: { type: Type.STRING },
-                        description: { type: Type.STRING },
-                        imagePrompt: { type: Type.STRING },
-                        rewardXP: { type: Type.NUMBER }
-                    }
+            storyLine: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.NUMBER },
+                  title: { type: Type.STRING },
+                  description: { type: Type.STRING },
+                  imagePrompt: { type: Type.STRING },
+                  rewardXP: { type: Type.NUMBER }
                 }
+              }
             }
           },
           required: ["title", "description", "type", "difficulty", "xpReward", "coinReward", "imagePrompt", "roleTags", "difficultyTier"]
@@ -147,14 +146,14 @@ export async function generateAIQuests(
 
 export async function findNearbyQuestLocations(lat: number, lng: number, topic: string): Promise<Quest[]> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+
   const prompt = `Act as a neighborhood guide. Suggest 3 interesting things to find related to "${topic}" near ${lat}, ${lng}. 
     Focus on items in parks, common spaces, or residential areas. 
     Use everyday, friendly language. No technical jargon.
     Return a valid JSON array of Quest objects.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -200,7 +199,7 @@ export async function validateQuestImage(
   userStats?: UserStats
 ): Promise<ValidationResult> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+
   const imagePart = {
     inlineData: {
       mimeType: 'image/jpeg',
@@ -216,7 +215,7 @@ export async function validateQuestImage(
     Respond in JSON: success (bool), confidence (0-1), message (friendly feedback), detectedItems (string array).`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents: { parts: [imagePart, { text: prompt }] },
     config: {
       responseMimeType: "application/json",
@@ -238,7 +237,7 @@ export async function validateQuestImage(
 
 export async function chatWithAssistant(message: string, history: any[] = []): Promise<{ text: string; sources?: { uri: string; title: string }[] }> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+
   const contents = history.map(h => ({
     role: h.sender === 'ai' ? 'model' : 'user',
     parts: [{ text: h.text }]
@@ -246,7 +245,7 @@ export async function chatWithAssistant(message: string, history: any[] = []): P
   contents.push({ role: 'user', parts: [{ text: message }] });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents,
     config: {
       systemInstruction: "You are the Quest Lens Neighborhood Guide. Be warm, helpful, and professional. Avoid all sci-fi or technical jargon. Use Google Search to provide interesting facts about discoveries.",
@@ -270,7 +269,7 @@ export async function chatWithAssistant(message: string, history: any[] = []): P
 export async function speakResponse(text: string): Promise<ArrayBuffer | undefined> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
+    model: "gemini-1.5-flash", // TTS can be performed by multimodal 1.5-flash
     contents: [{ parts: [{ text }] }],
     config: {
       responseModalities: [Modality.AUDIO],
@@ -281,10 +280,10 @@ export async function speakResponse(text: string): Promise<ArrayBuffer | undefin
       },
     },
   });
-  
+
   const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   if (!base64Audio) return undefined;
-  
+
   const binaryString = atob(base64Audio);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
