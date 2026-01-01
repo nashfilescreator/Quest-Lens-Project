@@ -53,6 +53,12 @@ export default defineSchema({
     skillCooldowns: v.any(),
     isMatchmaking: v.optional(v.boolean()),
     cachedAiQuests: v.optional(v.array(v.any())),
+    role: v.string(),
+    winStreak: v.number(),
+    totalWins: v.number(),
+    badges: v.array(v.string()),
+    teamInvites: v.array(v.any()),
+    notifications: v.array(v.any()),
   })
     .index("by_uid", ["uid"])
     .index("by_xp", ["xp"])
