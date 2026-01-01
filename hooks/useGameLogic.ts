@@ -54,15 +54,16 @@ export const useGameLogic = (settings: AppSettings) => {
     return { ...INITIAL_STATS, settings: settings || INITIAL_SETTINGS };
   }, [user, settings]);
 
-  const updateProfile = useCallback(async (updates: Partial<UserStats>) => {
+  const updateProfile = useCallback(async (updatesOrFn: any) => {
     if (!user) return;
     try {
+      const updates = typeof updatesOrFn === 'function' ? updatesOrFn(stats) : updatesOrFn;
       await updateUserMutation({ id: user._id, updates });
     } catch (error) {
       console.error('[Convex] Failed to update profile:', error);
       playSound('error');
     }
-  }, [user, updateUserMutation]);
+  }, [user, stats, updateUserMutation]);
 
   const addNotification = useCallback(async (title: string, message: string, type: any) => {
     try {
