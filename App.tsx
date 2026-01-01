@@ -300,7 +300,9 @@ export default function App() {
         </div>
       </AuthLoading>
       <Unauthenticated>
-        <Auth onAuthenticated={() => { }} />
+        <Auth onAuthenticated={() => {
+          localStorage.setItem('questlens_authenticated', 'true');
+        }} />
       </Unauthenticated>
       <Authenticated>
         <GameContent />

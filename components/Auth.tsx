@@ -49,6 +49,11 @@ export default function Auth({ onAuthenticated }: AuthProps) {
             }
         } catch (err: any) {
             console.error("SignIn error", err);
+            // If session already exists, we can consider it a success and proceed
+            if (err.errors?.[0]?.code === "session_already_exists") {
+                onAuthenticated();
+                return;
+            }
             setError(err.errors?.[0]?.message || "Failed to sign in. Check your credentials.");
         } finally {
             setLoading(false);
@@ -65,7 +70,8 @@ export default function Auth({ onAuthenticated }: AuthProps) {
             await signUp.create({
                 emailAddress: email,
                 password,
-                username: username || undefined,
+                // Note: username is only sent if enabled in Clerk Dashboard. 
+                // Currently rejected by API, so removed to ensure sign-up works.
             });
 
             // Prepare email verification
@@ -258,6 +264,9 @@ export default function Auth({ onAuthenticated }: AuthProps) {
                         {/* Button Shine Effect */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
                     </button>
+
+                    {/* Clerk Bot Protection Hint */}
+                    <div id="clerk-captcha"></div>
 
                 </form>
 
