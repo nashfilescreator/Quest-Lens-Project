@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSignIn, useSignUp } from "@clerk/clerk-react";
+import React, { useState, useEffect } from 'react';
+import { useSignIn, useSignUp, useAuth } from "@clerk/clerk-react";
 import { Mail, Lock, User, ArrowRight, X, AlertTriangle, Loader, CheckCircle, ChevronRight, Eye, EyeOff } from 'lucide-react';
 
 interface AuthProps {
@@ -11,8 +11,16 @@ type AuthMode = 'signin' | 'signup' | 'verify';
 export default function Auth({ onAuthenticated }: AuthProps) {
     const { isLoaded: isSignInLoaded, signIn, setActive: setSignInActive } = useSignIn();
     const { isLoaded: isSignUpLoaded, signUp, setActive: setSignUpActive } = useSignUp();
+    const { isLoaded: isAuthLoaded, userId } = useAuth();
 
     const [mode, setMode] = useState<AuthMode>('signin');
+
+    // Auto-redirect if already logged in but stuck on this view
+    useEffect(() => {
+        if (isAuthLoaded && userId) {
+            onAuthenticated();
+        }
+    }, [isAuthLoaded, userId, onAuthenticated]);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState(""); // Optional, for display or meta
