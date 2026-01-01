@@ -290,66 +290,56 @@ function GameContent() {
 
 
 
+// Helper to manage the Auth state transitions
+function AuthGate() {
+  const { isLoaded, userId } = useAuth();
+
+  // If Clerk is loaded and we have a userId, but we are inside <Unauthenticated>,
+  // it means Convex is still verifying the token. We should show a syncing screen.
+  if (isLoaded && userId) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#020617] text-white p-6 text-center">
+        <Loader className="animate-spin text-primary mb-4" size={32} />
+        <h2 className="text-xl font-bold mb-2 text-cyan-400 tracking-tight">SYNCING SECURITY PROTOCOL</h2>
+        <p className="text-sm text-slate-400 max-w-xs leading-relaxed">
+          Establishing a secure link to the Convex network.
+          This usually takes a moment...
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-8 text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 hover:text-white transition-colors flex items-center gap-2"
+        >
+          <Zap size={12} /> Force Handshake
+        </button>
+      </div>
+    );
+  }
+
+  // Otherwise, if we truly have no session, show the login form.
+  return (
+    <Auth onAuthenticated={() => {
+      // Logic for post-auth actions (like re-syncing)
+      console.log("[AuthGate] Auth successful, waiting for protocol sync...");
+    }} />
+  );
+}
+
 export default function App() {
-  const [isSyncing, setIsSyncing] = useState(() => {
-    // Check if we just refreshed for a sync in the last 60 seconds
-    const syncStart = localStorage.getItem('questlens_sync_start');
-    return syncStart ? (Date.now() - parseInt(syncStart)) < 60000 : false;
-  });
-
-  // Safety timer: if we're still "syncing" after 30 seconds, something is wrong (likely backend config)
-  // Let's reset and allow the user to see the login/error screen again.
-  useEffect(() => {
-    if (isSyncing) {
-      const timer = setTimeout(() => {
-        setIsSyncing(false);
-        localStorage.removeItem('questlens_sync_start');
-      }, 30000);
-      return () => clearTimeout(timer);
-    }
-  }, [isSyncing]);
-
   return (
     <>
       <AuthLoading>
         <div className="fixed inset-0 flex items-center justify-center bg-[#020617] text-white">
           <div className="flex flex-col items-center gap-4">
             <Loader className="animate-spin text-primary" size={32} />
-            <p className="text-xs uppercase tracking-widest text-white/50">Establishing Connection...</p>
+            <p className="text-xs uppercase tracking-widest text-slate-500">Establishing Connection...</p>
           </div>
         </div>
       </AuthLoading>
       <Unauthenticated>
-        {isSyncing ? (
-          <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#020617] text-white p-6 text-center">
-            <Loader className="animate-spin text-primary mb-4" size={32} />
-            <h2 className="text-xl font-bold mb-2">Syncing Security Protocol</h2>
-            <p className="text-sm text-white/60 max-w-xs">Connecting to your secure vault. If this takes more than 10 seconds, please check your connection.</p>
-            <button
-              onClick={() => { setIsSyncing(false); localStorage.removeItem('questlens_sync_start'); }}
-              className="mt-8 text-[10px] uppercase tracking-[0.2em] font-bold text-white/40 hover:text-white transition-colors"
-            >
-              Cancel & Retry
-            </button>
-          </div>
-        ) : (
-          <Auth onAuthenticated={() => {
-            console.log("[App] Auth successful, triggering sync refresh...");
-            setIsSyncing(true);
-            localStorage.setItem('questlens_sync_start', Date.now().toString());
-            window.location.reload();
-          }} />
-        )}
+        <AuthGate />
       </Unauthenticated>
       <Authenticated>
-        {(() => {
-          // Success! Clear the syncing flag
-          if (isSyncing) {
-            setIsSyncing(false);
-            localStorage.removeItem('questlens_sync_start');
-          }
-          return <GameContent />;
-        })()}
+        <GameContent />
       </Authenticated>
     </>
   );
