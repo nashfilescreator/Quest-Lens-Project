@@ -42,6 +42,8 @@ export default function Auth({ onAuthenticated }: AuthProps) {
 
             if (result.status === "complete") {
                 await setSignInActive({ session: result.createdSessionId });
+                // Note: clerk-react will eventually trigger a re-render in the index.tsx 
+                // but we call onAuthenticated for any local state cleanup
                 onAuthenticated();
             } else {
                 console.error("SignIn incomplete", result);
@@ -49,7 +51,7 @@ export default function Auth({ onAuthenticated }: AuthProps) {
             }
         } catch (err: any) {
             console.error("SignIn error", err);
-            // If session already exists, we can consider it a success and proceed
+            // If session already exists, we should ensure the UI reflects this
             if (err.errors?.[0]?.code === "session_already_exists") {
                 onAuthenticated();
                 return;

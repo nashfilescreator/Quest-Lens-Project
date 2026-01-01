@@ -302,6 +302,7 @@ export default function App() {
       <Unauthenticated>
         <Auth onAuthenticated={() => {
           localStorage.setItem('questlens_authenticated', 'true');
+          window.location.reload();
         }} />
       </Unauthenticated>
       <Authenticated>
