@@ -1,7 +1,8 @@
 
 import React, { Component, useState, useEffect, Suspense, ReactNode, useCallback, memo, useMemo, useTransition } from 'react';
 import { LayoutDashboard, Users, MapPin, Scan, Sparkles, X, Trophy, Zap, Clock, Loader, AlertTriangle, Compass, BookOpen, User as UserIcon } from 'lucide-react';
-import { useMutation } from "convex/react";
+import { useMutation, Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+import { useAuth } from "@clerk/clerk-react";
 import { api } from "@/convex/_generated/api";
 import { Quest, ValidationResult, QuestType, ViewState, AppSettings, Friend, StoryStep, Notification, DiscoveryResult, TeamMission, UserStats, FeedPost, AppRole, Skill } from './types';
 import { useGameLogic } from './hooks/useGameLogic';
@@ -75,7 +76,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 const MemoizedTopBar = memo(TopBar);
 const MemoizedDashboard = memo(Dashboard);
 
-import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+
 
 function GameContent() {
   const {
