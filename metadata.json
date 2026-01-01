@@ -1,0 +1,9 @@
+{
+  "name": "QUEST LENS - FULL STACK AI",
+  "description": "A deep-tech neighborhood discovery platform powered by Gemini AI and Convex real-time backend.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
