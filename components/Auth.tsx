@@ -115,6 +115,10 @@ export default function Auth({ onAuthenticated }: AuthProps) {
             }
         } catch (err: any) {
             console.error("Verification error", err);
+            if (err.errors?.[0]?.code === "session_already_exists") {
+                onAuthenticated();
+                return;
+            }
             setError(err.errors?.[0]?.message || "Invalid verification code.");
         } finally {
             setLoading(false);
