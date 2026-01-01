@@ -45,9 +45,12 @@ export default function Auth({ onAuthenticated }: AuthProps) {
                 // Note: clerk-react will eventually trigger a re-render in the index.tsx 
                 // but we call onAuthenticated for any local state cleanup
                 onAuthenticated();
+            } else if (result.status === "needs_second_factor") {
+                console.error("SignIn requires 2FA", result);
+                setError("Your account requires Two-Factor Authentication (2FA). Please disable 2FA in your Clerk Dashboard for this test account, or use an account without 2FA.");
             } else {
                 console.error("SignIn incomplete", result);
-                setError("Sign in requires further steps.");
+                setError(`Sign in requires further steps: ${result.status}.`);
             }
         } catch (err: any) {
             console.error("SignIn error", err);
