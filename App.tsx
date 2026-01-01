@@ -295,7 +295,7 @@ export default function App() {
         <div className="fixed inset-0 flex items-center justify-center bg-[#020617] text-white">
           <div className="flex flex-col items-center gap-4">
             <Loader className="animate-spin text-primary" size={32} />
-            <p className="text-xs uppercase tracking-widest text-white/50">Initializing Uplink...</p>
+            <p className="text-xs uppercase tracking-widest text-white/50">Loading Quest Lens...</p>
           </div>
         </div>
       </AuthLoading>

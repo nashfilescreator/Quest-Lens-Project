@@ -40,7 +40,15 @@ self.addEventListener('fetch', (event) => {
     );
   } else {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request).catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        // Return a basic error response if both fail
+        return new Response('Network and cache failed', {
+          status: 408,
+          statusText: 'Network and cache failed'
+        });
+      })
     );
   }
 });
