@@ -21,6 +21,9 @@ export const useQuestSystem = (
   const completeStepMutation = useMutation(api.users.completeQuestStep);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const saveFileReference = useMutation(api.files.saveFileReference);
+
   const allQuests = useMemo(() => {
     const combined = [...(stats.cachedAiQuests || []), ...communityQuests];
     const seen = new Set();
@@ -65,12 +68,40 @@ export const useQuestSystem = (
     if (!stats || !convexUserId) return;
     const rewards = calculateQuestRewards(stats, quest, storyStep);
 
+    let storageIdOrUrl = capturedImage;
+
+    if (capturedImage && capturedImage.startsWith('data:')) {
+      try {
+        // Upload to Convex Storage
+        const uploadUrl = await generateUploadUrl();
+        const response = await fetch(capturedImage);
+        const blob = await response.blob();
+
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": blob.type },
+          body: blob,
+        });
+
+        const { storageId } = await result.json();
+        const { url } = await saveFileReference({
+          storageId,
+          userId: convexUserId,
+          fileType: "quest",
+          metadata: { questId: quest.id, stepId: storyStep?.id }
+        });
+        storageIdOrUrl = url;
+      } catch (err) {
+        console.error("Failed to upload image:", err);
+      }
+    }
+
     if (capturedImage) {
       const isFinalStep = !quest.storyLine || (storyStep && storyStep.id === quest.storyLine.length);
       const entry = {
         id: `entry-${Date.now()}`,
         questTitle: storyStep ? `${quest.title}: ${storyStep.title}` : quest.title,
-        image: capturedImage,
+        image: storageIdOrUrl, // Use the storage URL
         date: new Date().toLocaleDateString(),
         rewards: { xp: rewards.xp, coins: rewards.coins, influence: rewards.influence }
       };
@@ -84,7 +115,7 @@ export const useQuestSystem = (
       });
     }
     return rewards;
-  }, [stats, convexUserId, completeStepMutation]);
+  }, [stats, convexUserId, completeStepMutation, generateUploadUrl, saveFileReference]);
 
   const createQuest = useCallback(async (quest: Partial<Quest>) => {
     const finalQuest = {

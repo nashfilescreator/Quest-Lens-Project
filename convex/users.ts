@@ -12,6 +12,17 @@ export const getByUid = query({
   },
 });
 
+export const getCurrentUser = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    return await ctx.db
+      .query("users")
+      .withIndex("by_uid", (q) => q.eq("uid", identity.subject))
+      .unique();
+  },
+});
+
 export const getByIds = query({
   args: { uids: v.array(v.string()) },
   handler: async (ctx, args) => {
@@ -60,19 +71,29 @@ export const getLeaderboard = query({
 
 export const create = mutation({
   args: {
-    uid: v.string(),
+    uid: v.optional(v.string()), // Made optional
     username: v.string(),
     avatarSeed: v.string(),
     initialStats: v.any(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const uid = identity ? identity.subject : args.uid;
+
+    if (!uid) throw new Error("User must be authenticated or provide a UID");
+
     const existing = await ctx.db
       .query("users")
-      .withIndex("by_uid", (q) => q.eq("uid", args.uid))
+      .withIndex("by_uid", (q) => q.eq("uid", uid))
       .unique();
+
     if (existing) return existing._id;
+
+    // Check if user exists by username if no UID match (migration case?)
+    // Actually, let's just create new user linked to auth ID.
+
     return await ctx.db.insert("users", {
-      uid: args.uid,
+      uid: uid,
       username: args.username,
       avatarSeed: args.avatarSeed,
       friends: [],

@@ -2,7 +2,9 @@
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexReactClient } from "convex/react";
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Loader } from 'lucide-react';
 
 /**
@@ -24,6 +26,12 @@ const convex = new ConvexReactClient(
   convexUrl || "https://placeholder-offline.convex.cloud"
 );
 
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+if (!PUBLISHABLE_KEY) {
+  console.warn("Missing Publishable Key: VITE_CLERK_PUBLISHABLE_KEY");
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
@@ -32,15 +40,17 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <ConvexProvider client={convex}>
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#020617]">
-          <Loader className="animate-spin text-[#818cf8]" size={32} />
-        </div>
-      }>
-        <App />
-      </Suspense>
-    </ConvexProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY || "pk_test_placeholder"}>
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center bg-[#020617]">
+            <Loader className="animate-spin text-[#818cf8]" size={32} />
+          </div>
+        }>
+          <App />
+        </Suspense>
+      </ConvexProviderWithClerk>
+    </ClerkProvider>
   </React.StrictMode>
 );
 

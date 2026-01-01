@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
   UserStats, AppSettings, Quest, MarketItem, Recipe, ActiveBuff, DiscoveryResult, Skill
@@ -11,13 +11,15 @@ import { useSocialSystem } from './useSocialSystem';
 import { playSound } from '../services/audioService';
 
 export const useGameLogic = (settings: AppSettings) => {
-  const localUid = localStorage.getItem('questlens_local_uid') || 'anonymous';
-  const user = useQuery(api.users.getByUid, { uid: localUid });
+  const { isAuthenticated: isAuth } = useConvexAuth();
+  const user = useQuery(api.users.getCurrentUser);
+  const localUid = user?.uid || "";
+
   const convexNotifications = useQuery(api.notifications.getByUser, { userId: localUid }) || [];
 
   // Loading state for better UX
   const isLoading = user === undefined;
-  const isAuthenticated = !!user;
+  // const isAuthenticated = !!user; // rely on Clerk auth + user doc existence
 
   const updateUserMutation = useMutation(api.users.update);
   const claimBonus = useMutation(api.users.claimDaily);
@@ -33,17 +35,17 @@ export const useGameLogic = (settings: AppSettings) => {
 
   // Update last active timestamp on mount and periodically
   useEffect(() => {
-    if (localUid !== 'anonymous') {
-      updateLastActiveMutation({ uid: localUid });
+    if (user) {
+      updateLastActiveMutation({ uid: user.uid });
 
       // Update every 5 minutes while active
       const interval = setInterval(() => {
-        updateLastActiveMutation({ uid: localUid });
+        updateLastActiveMutation({ uid: user.uid });
       }, 5 * 60 * 1000);
 
       return () => clearInterval(interval);
     }
-  }, [localUid, updateLastActiveMutation]);
+  }, [user, updateLastActiveMutation]);
 
   // Cloud-first stats - only fall back to initial if no user exists yet
   const stats: UserStats = useMemo(() => {
@@ -87,15 +89,45 @@ export const useGameLogic = (settings: AppSettings) => {
     quests, worldEvents, isRefreshing, refreshAIQuests, processQuestCompletion, createQuest, updateQuest
   } = useQuestSystem(stats, updateProfile, stats.settings, addNotification, localUid, user?._id);
 
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const saveFileReference = useMutation(api.files.saveFileReference);
+
   const handleDiscovery = useCallback(async (res: DiscoveryResult, img: string) => {
     if (!user) return;
+
+    let imageUrl = img;
+    if (img && img.startsWith('data:')) {
+      try {
+        const uploadUrl = await generateUploadUrl();
+        const response = await fetch(img);
+        const blob = await response.blob();
+
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": blob.type },
+          body: blob,
+        });
+
+        const { storageId } = await result.json();
+        const saved = await saveFileReference({
+          storageId,
+          userId: user._id,
+          fileType: "discovery",
+          metadata: { discoveryName: res.name, rarity: res.rarity }
+        });
+        imageUrl = saved.url;
+      } catch (e) {
+        console.error("Upload failed", e);
+      }
+    }
+
     await logDiscoveryMutation({
       userId: user._id,
       discovery: res,
-      image: img
+      image: imageUrl
     });
     addNotification("Discovery Logged", `You found a ${res.rarity} artifact: ${res.name}`, "success");
-  }, [user, logDiscoveryMutation, addNotification]);
+  }, [user, logDiscoveryMutation, addNotification, generateUploadUrl, saveFileReference]);
 
   const handlePurchase = useCallback(async (item: MarketItem) => {
     if (!user || user.coins < item.price) return;

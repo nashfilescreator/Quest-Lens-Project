@@ -75,8 +75,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 const MemoizedTopBar = memo(TopBar);
 const MemoizedDashboard = memo(Dashboard);
 
-export default function App() {
-  const localUid = useMemo(() => localStorage.getItem('questlens_local_uid') || 'anonymous', []);
+import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+
+function GameContent() {
   const {
     view, changeView, activeQuest, setActiveQuest, activeStoryStep, setActiveStoryStep,
     completionData, setCompletionData, discoveryContext, setDiscoveryContext,
@@ -84,11 +85,6 @@ export default function App() {
     activeModals, openModal, closeModal, activeToast, setToast, inspectedAgent,
     isCameraOpen, setIsCameraOpen, isTeamContribution, setIsTeamContribution
   } = useUIStore();
-
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    const saved = localStorage.getItem('questLens_settings');
-    return saved ? JSON.parse(saved) : INITIAL_SETTINGS;
-  });
 
   const {
     stats, setStats, quests, worldEvents, isRefreshing, refreshAIQuests,
@@ -99,28 +95,45 @@ export default function App() {
     claimDailyBonus, handlePurchase, handleUseItem, handleEquipItem, respondToTeamInvite, joinTeam, cancelJoinTeam,
     kickMember, handleUpdateProfile, handleUpdateSettings, createTeam, markNotificationRead, clearAllNotifications,
     contributeToWorldEvent, manageTeamRequest
-  } = useGameLogic(settings);
+  } = useGameLogic(INITIAL_SETTINGS);
+
+  // Derived settings from stats, or fallback to default
+  const settings = stats.settings || INITIAL_SETTINGS;
+
+  // Determine localUid from stats or auth? useGameLogic uses useConvexAuth now.
+  // We can get the ID from stats if available.
+  const localUid = stats?.uid || 'user';
 
   const { matchState, opponent, joinQueue, reportVictory } = useDuel(localUid);
 
   const createUser = useMutation(api.users.create);
-  const [isPending, startTransition] = useTransition();
 
+  // Ensure user exists in DB
   useEffect(() => {
-    const isAuth = localStorage.getItem('questlens_authenticated') === 'true';
-    if (isAuth && localUid !== 'anonymous') {
+    // If stats are initial (fallback), we might need to create the user in DB
+    // But useGameLogic only falls back if userQuery returns null.
+    // So if we are here (Authenticated), and stats.username is 'Explorer' (default), 
+    // it probably means we need to create the user doc.
+    // However, useGameLogic returns INITIAL_STATS when user is undefined.
+
+    // Better check: query if user exists, if not create.
+    // But we don't want to query inside useEffect if possible.
+    // useGameLogic already queries currentUser.
+
+    // Let's rely on useGameLogic's `stats` being the source of truth.
+    // If we want to force creation:
+    if (!stats._id) {
       createUser({
-        uid: localUid,
-        username: stats.username,
-        avatarSeed: stats.avatarSeed,
+        username: "Explorer", // Default, could prompt user
+        avatarSeed: "Felix",
         initialStats: INITIAL_STATS
       });
     }
-  }, [localUid, stats.username, stats.avatarSeed, createUser]);
+  }, [createUser, stats._id]);
 
   const handleJoinQuest = useCallback((quest: Quest) => {
-    const isCompleted = stats.completedQuestIds.includes(quest.id);
-    if (!isCompleted && !stats.activeQuestIds.includes(quest.id)) {
+    const isCompleted = stats.completedQuestIds?.includes(quest.id);
+    if (!isCompleted && !stats.activeQuestIds?.includes(quest.id)) {
       setStats((prev: any) => ({ ...prev, activeQuestIds: [...prev.activeQuestIds, quest.id] }));
     }
     setActiveQuest(quest);
@@ -171,26 +184,29 @@ export default function App() {
     }
   }, [view, isTeamContribution, contributeToTeamMission, reportVictory, scannerMode, activeQuest, activeStoryStep, processQuestCompletion, handleDiscovery, closeModal, setIsCameraOpen, setIsTeamContribution, setCompletionData, setToast, openModal]);
 
-  const isFullScreenView = useMemo(() => ['oracle', 'ar-lens', 'auth', 'onboarding', 'duel', 'scanner', 'edit-profile', 'role-selection', 'region-selection', 'team-chat', 'create'].includes(view), [view]);
+  const isFullScreenView = useMemo(() => ['oracle', 'ar-lens', 'duel', 'scanner', 'edit-profile', 'role-selection', 'region-selection', 'team-chat', 'create'].includes(view), [view]);
   const showBottomBar = useMemo(() => !isFullScreenView && !['active-quest', 'story-path', 'team', 'settings', 'create', 'market', 'journal', 'my-quests'].includes(view), [isFullScreenView, view]);
 
   return (
     <div className={`min-h-screen bg-background text-txt-main relative overflow-hidden flex flex-col ${isFullScreenView ? '' : 'pt-[52px]'} ${showBottomBar ? 'pb-[72px]' : ''}`}>
       {!isFullScreenView && <MemoizedTopBar stats={stats} notifications={notifications} />}
-      <main className={`flex-1 relative z-10 overflow-hidden ${isPending ? 'opacity-70' : 'opacity-100'}`}>
+      <main className={`flex-1 relative z-10 overflow-hidden`}>
         <ErrorBoundary>
           <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-background"><Loader className="animate-spin text-primary" size={32} /></div>}>
-            {view === 'onboarding' && <Onboarding onComplete={() => { localStorage.setItem('questLens_onboarded', 'true'); changeView('auth'); }} />}
-            {view === 'auth' && <Auth onAuthenticated={(u) => { localStorage.setItem('questlens_authenticated', 'true'); changeView('role-selection'); }} />}
+            {/* Removed internal Auth/Onboarding routing, handled by wrappers now */}
+            {view === 'onboarding' && <Onboarding onComplete={() => { localStorage.setItem('questLens_onboarded', 'true'); changeView('role-selection'); }} />}
+            {/* view === 'auth' is no longer reachable ideally, but if it is, redirect */}
+            {view === 'auth' && <RoleSelection username={stats.username} onComplete={(roles) => { setStats((p: any) => ({ ...p, activeRoles: roles })); changeView('feed'); }} />}
+
             {view === 'role-selection' && <RoleSelection username={stats.username} onComplete={(roles) => { setStats((p: any) => ({ ...p, activeRoles: roles })); changeView('feed'); }} />}
             {view === 'feed' && <MemoizedDashboard stats={stats} quests={quests} worldEvents={worldEvents} filter={'ALL'} setFilter={() => { }} onJoinQuest={handleJoinQuest} onEditQuest={(q) => { setEditingQuest(q); changeView('create'); }} onRefreshAIQuests={() => refreshAIQuests()} isRefreshing={isRefreshing} onContributeEvent={contributeToWorldEvent} />}
             {view === 'map' && <QuestRadar quests={quests} onQuestSelect={handleJoinQuest} openARLens={() => changeView('ar-lens')} userStats={stats} />}
             {view === 'ar-lens' && <ARLens onClose={() => changeView('map')} quests={quests} onQuestSelect={handleJoinQuest} activeBuffs={stats.activeBuffs} />}
-            {view === 'active-quest' && activeQuest && <QuestDetail quest={activeQuest} isCompleted={stats.completedQuestIds.includes(activeQuest.id)} />}
+            {view === 'active-quest' && activeQuest && <QuestDetail quest={activeQuest} isCompleted={stats.completedQuestIds?.includes(activeQuest.id)} />}
             {view === 'story-path' && activeQuest && <StoryPath quest={activeQuest} onBack={() => changeView('active-quest')} onStartStep={(step) => { setActiveStoryStep(step); setIsCameraOpen(true); }} />}
             {view === 'my-quests' && <ActiveQuests allQuests={quests} activeQuestIds={stats.activeQuestIds} activeTeamMission={team?.activeMission} onBack={() => changeView('feed')} onResume={handleJoinQuest} onAbandon={(id) => setStats((p: any) => ({ ...p, activeQuestIds: p.activeQuestIds.filter((qid: any) => qid !== id) }))} onAbandonTeamMission={cancelTeamMission} />}
             {view === 'profile' && <UserProfile stats={stats} />}
-            {view === 'settings' && <Settings settings={settings} stats={stats} onUpdateSettings={setSettings} onUpdateStats={setStats} onBack={() => changeView('profile')} onLogout={() => { localStorage.clear(); window.location.reload(); }} onResetData={() => { localStorage.clear(); window.location.reload(); }} onEditProfile={() => changeView('edit-profile')} />}
+            {view === 'settings' && <Settings settings={settings} stats={stats} onUpdateSettings={handleUpdateSettings} onUpdateStats={setStats} onBack={() => changeView('profile')} onLogout={() => { /* Clerk logout handled in settings? */ window.location.reload(); }} onResetData={() => { localStorage.clear(); window.location.reload(); }} onEditProfile={() => changeView('edit-profile')} />}
             {view === 'edit-profile' && <EditProfileModal currentStats={stats} onSave={(updates) => { handleUpdateProfile(updates); changeView('profile'); }} onClose={() => changeView('settings')} currentCountry={settings.country} />}
             {view === 'region-selection' && <RegionSelection settings={settings} stats={stats} onUpdateSettings={handleUpdateSettings} onUpdateStats={setStats} onBack={() => changeView('settings')} />}
             {view === 'social' && <SocialFeed posts={posts} leaderboardEntries={leaderboard} currentUserRank={userRank} friends={friends} friendRequests={friendRequests} team={team} globalTeams={globalTeams} userMaterials={stats.materials} onOpenTeam={() => changeView('team')} onInspectAgent={(agent) => openModal('agentProfile', agent)} onLikePost={likePost} onCommentPost={commentPost} onSocialAction={handleSocialAction} onJoinTeamRequest={joinTeam} onCancelTeamRequest={cancelJoinTeam} onManageTeamRequest={manageTeamRequest} />}
@@ -236,12 +252,13 @@ export default function App() {
         </div>
       )}
 
-      {activeModals.has('dailyBonus') && <DailyBonusModal streak={stats.streak} onClaim={claimDailyBonus} onClose={() => closeModal('dailyBonus')} />}
+      {activeModals.has('dailyBonus') && <DailyBonusModal streak={stats.streak || 0} onClaim={claimDailyBonus} onClose={() => closeModal('dailyBonus')} />}
       {activeModals.has('levelUp') && <LevelUpModal newStats={stats} onClose={() => closeModal('levelUp')} />}
       {activeModals.has('inventory') && <InventoryModal userStats={stats} onUseItem={handleUseItem} onEquipItem={handleEquipItem} onOpenCrafting={() => { closeModal('inventory'); openModal('crafting'); }} onClose={() => closeModal('inventory')} />}
       {activeModals.has('notifications') && <NotificationCenter notifications={notifications} onClose={() => closeModal('notifications')} onClear={() => clearAllNotifications()} onMarkRead={(id) => markNotificationRead(id)} onAcceptInvite={(id) => respondToTeamInvite(id, true)} onDeclineInvite={(id) => respondToTeamInvite(id, false)} />}
       {activeModals.has('agentProfile') && inspectedAgent && <AgentProfileModal agent={inspectedAgent} onClose={() => closeModal('agentProfile')} onAddFriend={() => handleSocialAction('send_request', inspectedAgent.id)} onDuel={() => changeView('duel')} onChat={() => { }} onCancelRequest={() => handleSocialAction('cancel_request', inspectedAgent.id)} />}
       {activeModals.has('crafting') && <CraftingStation stats={stats} recipes={RECIPES} items={quests.map(q => ({ id: q.id, name: q.title, description: q.description, price: 100, category: 'powerup', image: q.coverImage || '' }))} onCraft={handleCrafting} onClose={() => closeModal('crafting')} />}
+
 
       {isCameraOpen && <CameraCapture objective={scannerMode === 'free' ? "Anything interesting" : (activeStoryStep?.imagePrompt || activeQuest?.imagePrompt || "Item")} onClose={() => setIsCameraOpen(false)} onSuccess={handleValidationSuccess} userStats={stats} />}
 
@@ -250,7 +267,6 @@ export default function App() {
           quest={completionData.discovery ? null : activeQuest} discovery={completionData.discovery} validation={completionData.result} capturedImage={completionData.image} rewards={completionData.rewards}
           onShare={(caption) => {
             const newPost: any = {
-              userId: localUid,
               username: stats.username,
               avatarSeed: stats.avatarSeed,
               questTitle: completionData.discovery?.name || activeQuest?.title || "Discovery",
@@ -259,7 +275,7 @@ export default function App() {
               likes: 0,
               likedBy: [],
               timeAgo: 'Just now',
-              userRank: stats.rank
+              userRank: stats.rank || 'Newcomer'
             };
             setPosts({ post: newPost });
             setCompletionData(null);
@@ -269,5 +285,26 @@ export default function App() {
       )}
       <Toast notification={activeToast} onClose={() => setToast(null)} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <>
+      <AuthLoading>
+        <div className="fixed inset-0 flex items-center justify-center bg-[#020617] text-white">
+          <div className="flex flex-col items-center gap-4">
+            <Loader className="animate-spin text-primary" size={32} />
+            <p className="text-xs uppercase tracking-widest text-white/50">Initializing Uplink...</p>
+          </div>
+        </div>
+      </AuthLoading>
+      <Unauthenticated>
+        <Auth onAuthenticated={() => { }} />
+      </Unauthenticated>
+      <Authenticated>
+        <GameContent />
+      </Authenticated>
+    </>
   );
 }
