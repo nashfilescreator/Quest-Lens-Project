@@ -28,7 +28,7 @@ export async function identifyDiscovery(base64Image: string): Promise<DiscoveryR
     XP should scale with rarity (50 to 500). Use warm, neighborhood-friendly language.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash-lite-preview-06-17',
     contents: { parts: [imagePart, { text: prompt }] },
     config: {
       responseMimeType: "application/json",
@@ -91,7 +91,7 @@ export async function generateAIQuests(
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash-lite-preview-06-17',
     contents: enhancedPrompt,
     config: {
       responseMimeType: "application/json",
@@ -172,7 +172,7 @@ export async function findNearbyQuestLocations(lat: number, lng: number, topic: 
     Return a valid JSON array of Quest objects.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash-lite-preview-06-17',
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -239,7 +239,7 @@ export async function validateQuestImage(
     Respond in JSON: success (bool), confidence (0-1), message (friendly feedback), detectedItems (string array).`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash-lite-preview-06-17',
     contents: { parts: [imagePart, { text: prompt }] },
     config: {
       responseMimeType: "application/json",
@@ -269,7 +269,7 @@ export async function chatWithAssistant(message: string, history: any[] = []): P
   contents.push({ role: 'user', parts: [{ text: message }] });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash-lite-preview-06-17',
     contents,
     config: {
       systemInstruction: "You are the Quest Lens Neighborhood Guide. Be warm, helpful, and professional. Avoid all sci-fi or technical jargon. Use Google Search to provide interesting facts about discoveries.",
