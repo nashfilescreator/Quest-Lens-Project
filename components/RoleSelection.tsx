@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
-import { Check, ChevronRight, Loader, Zap } from 'lucide-react';
+import { Compass, Target, PenTool, GraduationCap, Check, ChevronRight, Loader, Zap } from 'lucide-react';
 import { AppRole } from '../types';
 import { playSound } from '../services/audioService';
 import OptimizedImage from './OptimizedImage';
-import { ROLE_ICONS } from '../constants';
 
 interface RoleSelectionProps {
   onComplete: (selectedRoles: AppRole[]) => void;
@@ -15,35 +14,35 @@ const ROLES: {
   id: AppRole;
   title: string;
   description: string;
-  icon: string;
+  icon: any;
   gradient: string;
 }[] = [
     {
       id: 'Explorer',
       title: 'Explorer',
       description: 'Find hidden items.',
-      icon: ROLE_ICONS['Explorer'],
+      icon: Compass,
       gradient: 'from-cyan-500 to-blue-600'
     },
     {
       id: 'Competitor',
       title: 'Competitor',
       description: 'Climb the ranks.',
-      icon: ROLE_ICONS['Competitor'],
+      icon: Target,
       gradient: 'from-orange-500 to-red-600'
     },
     {
       id: 'Creator',
       title: 'Creator',
       description: 'Design new quests.',
-      icon: ROLE_ICONS['Creator'],
+      icon: PenTool,
       gradient: 'from-violet-500 to-purple-600'
     },
     {
       id: 'Student',
       title: 'Student',
       description: 'Learn real facts.',
-      icon: ROLE_ICONS['Student'],
+      icon: GraduationCap,
       gradient: 'from-emerald-500 to-green-600'
     },
   ];
@@ -103,6 +102,7 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({ onComplete, username }) =
         <div className="w-full max-w-sm grid grid-cols-2 gap-x-6 gap-y-8 px-4">
           {ROLES.map((role) => {
             const isSelected = selected.includes(role.id);
+            const Icon = role.icon;
             return (
               <button
                 key={role.id}
@@ -114,14 +114,7 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({ onComplete, username }) =
                     w-20 h-20 rounded-[2.2rem] flex items-center justify-center transition-all duration-500 relative
                     ${isSelected ? `bg-gradient-to-br ${role.gradient} shadow-[0_0_30px_rgba(0,0,0,0.3)] scale-110` : 'bg-white/5 group-hover:bg-white/10 text-white/30'}
                 `}>
-                  <div className={`transition-all duration-300 w-12 h-12 ${isSelected ? 'scale-110' : 'scale-100 opacity-50'}`}>
-                    <OptimizedImage
-                      src={role.icon}
-                      alt={role.title}
-                      className="w-full h-full"
-                      imgClassName="object-contain"
-                    />
-                  </div>
+                  <Icon size={32} className={`transition-all duration-300 ${isSelected ? 'text-white scale-110' : 'scale-100'}`} strokeWidth={1.5} />
                   {isSelected && <div className="absolute inset-0 rounded-[2.2rem] bg-white/20 animate-pulse"></div>}
 
                   {/* Selected Checkmark */}

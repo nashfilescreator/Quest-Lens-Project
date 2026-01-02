@@ -1,9 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppRole, Skill } from '../types';
-import { X, Sparkles } from 'lucide-react';
-import { SKILL_ICONS } from '../constants';
-import OptimizedImage from './OptimizedImage';
+import { Radar, Zap, Share2, GraduationCap, X, Sparkles } from 'lucide-react';
 
 interface SkillDockProps {
   activeRoles: AppRole[];
@@ -13,13 +11,18 @@ interface SkillDockProps {
 }
 
 const SKILL_DATABASE: (Skill & { role: AppRole; color: string })[] = [
-  { id: 'sk_deep_scan', name: 'Range Pulse', description: 'Extends discovery range', cooldown: 300, icon: SKILL_ICONS['sk_deep_scan'], role: 'Explorer', color: 'text-blue-500' },
-  { id: 'sk_adrenaline', name: 'Arena Surge', description: 'Faster results in duels', cooldown: 600, icon: SKILL_ICONS['sk_adrenaline'], role: 'Competitor', color: 'text-red-500' },
-  { id: 'sk_viral', name: 'Influence 2X', description: 'Double influence on next post', cooldown: 1200, icon: SKILL_ICONS['sk_viral'], role: 'Creator', color: 'text-purple-500' },
-  { id: 'sk_focus', name: 'Study Link', description: 'Earn +50% SXP bonus', cooldown: 900, icon: SKILL_ICONS['sk_focus'], role: 'Student', color: 'text-emerald-500' }
+  { id: 'sk_deep_scan', name: 'Range Pulse', description: 'Extends discovery range', cooldown: 300, icon: 'Radar', role: 'Explorer', color: 'text-blue-500' },
+  { id: 'sk_adrenaline', name: 'Arena Surge', description: 'Faster results in duels', cooldown: 600, icon: 'Zap', role: 'Competitor', color: 'text-red-500' },
+  { id: 'sk_viral', name: 'Influence 2X', description: 'Double influence on next post', cooldown: 1200, icon: 'Share2', role: 'Creator', color: 'text-purple-500' },
+  { id: 'sk_focus', name: 'Study Link', description: 'Earn +50% SXP bonus', cooldown: 900, icon: 'GraduationCap', role: 'Student', color: 'text-emerald-500' }
 ];
 
-// No longer using ICON_MAP for Lucide icons
+const ICON_MAP: Record<string, React.ElementType> = {
+  Radar,
+  Zap,
+  Share2,
+  GraduationCap
+};
 
 const CircularProgress: React.FC<{ progress: number; color: string; size?: number; strokeWidth?: number }> = ({ progress, color, size = 40, strokeWidth = 3 }) => {
   const radius = (size - strokeWidth) / 2;
@@ -83,7 +86,7 @@ const SkillDock: React.FC<SkillDockProps> = ({ activeRoles, cooldowns, onUseSkil
         const remainingMs = cooldownEndTime - now;
         const progress = isOnCooldown ? Math.max(0, Math.min(100, (remainingMs / totalCooldownMs) * 100)) : 0;
 
-        // const IconComponent = ICON_MAP[skill.icon] || Zap;
+        const IconComponent = ICON_MAP[skill.icon] || Zap;
 
         const handleClick = () => {
           if (isOnCooldown) {
@@ -114,14 +117,7 @@ const SkillDock: React.FC<SkillDockProps> = ({ activeRoles, cooldowns, onUseSkil
                 {isOnCooldown ? (
                   <X size={20} className="opacity-0 group-hover:opacity-100 absolute transition-opacity" />
                 ) : null}
-                <div className={`${isOnCooldown ? 'group-hover:opacity-0' : ''} transition-opacity w-6 h-6`}>
-                  <OptimizedImage
-                    src={skill.icon}
-                    alt={skill.name}
-                    className="w-full h-full"
-                    imgClassName="object-contain"
-                  />
-                </div>
+                <IconComponent size={24} className={`${isOnCooldown ? 'group-hover:opacity-0' : ''} transition-opacity fill-current opacity-90`} />
               </div>
             </div>
 

@@ -13,13 +13,13 @@ const WorldEventCard: React.FC<WorldEventCardProps> = ({ event, onJoin }) => {
   const healthPercent = (event.currentHealth / event.targetHealth) * 100;
 
   return (
-    <div 
+    <div
       onClick={() => onJoin(event)}
       className="relative w-full h-40 rounded-[2rem] overflow-hidden group cursor-pointer border border-white/10 will-change-transform transition-transform duration-300 active:scale-95"
     >
       <div className="absolute inset-0 z-0">
-        <OptimizedImage 
-          src={`https://image.pollinations.ai/prompt/dramatic%20scenery%20${encodeURIComponent(event.title)}%20dark%20aesthetic?width=800&height=400&nologo=true&seed=${event.id}`}
+        <OptimizedImage
+          src="/assets/quests/story_adventure.png"
           alt="Event"
           className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500"
         />
@@ -32,24 +32,24 @@ const WorldEventCard: React.FC<WorldEventCardProps> = ({ event, onJoin }) => {
             Special Event
           </div>
           <div className="bg-black/60 px-2 py-1 rounded-lg border border-white/10 flex items-center gap-1.5">
-             <Users size={10} className="text-white/60" />
-             <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Live</span>
+            <Users size={10} className="text-white/60" />
+            <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Live</span>
           </div>
         </div>
 
         <div>
           <h3 className="text-xl font-display font-bold text-white mb-2 uppercase tracking-tight">{event.title}</h3>
-          
+
           <div className="space-y-1.5">
             <div className="flex justify-between items-end text-[9px] font-bold text-gray-500 uppercase tracking-widest">
               <span>Goal Progress</span>
               <span>{Math.round(healthPercent)}%</span>
             </div>
             <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-               <div 
+              <div
                 className="h-full bg-red-600 transition-all duration-1000"
-                style={{ width: `${healthPercent}%` }} 
-               />
+                style={{ width: `${healthPercent}%` }}
+              />
             </div>
           </div>
         </div>

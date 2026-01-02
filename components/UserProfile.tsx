@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserStats, AppRole } from '../types';
-import { MARKET_ITEMS, LEVEL_THRESHOLDS, ROLE_ICONS, BADGES } from '../constants';
-import { Settings, Award, ChevronRight, Edit2, Box, Crown, TrendingUp, History, Zap } from 'lucide-react';
+import { MARKET_ITEMS, LEVEL_THRESHOLDS } from '../constants';
+import { Settings, Award, ChevronRight, Edit2, Box, Crown, TrendingUp, GraduationCap, Compass, Target, PenTool, History, Zap } from 'lucide-react';
 import OptimizedImage from './OptimizedImage';
 import { useUIStore } from '../store/uiStore';
 
@@ -42,16 +42,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ stats }) => {
     const levelProgress = Math.min(100, Math.max(0, (((stats.xp || 0) - currentLevelBaseXP) / (nextLevelXP - currentLevelBaseXP)) * 100));
 
     const getRoleIcon = (role: AppRole) => {
-        return (
-            <div className="w-5 h-5">
-                <OptimizedImage
-                    src={ROLE_ICONS[role]}
-                    alt={role}
-                    className="w-full h-full"
-                    imgClassName="object-contain"
-                />
-            </div>
-        );
+        switch (role) {
+            case 'Explorer': return <Compass size={20} className="text-discovery-500" />;
+            case 'Competitor': return <Target size={20} className="text-challenge-500" />;
+            case 'Creator': return <PenTool size={20} className="text-creation-500" />;
+            case 'Student': return <GraduationCap size={20} className="text-learning-500" />;
+        }
     };
 
     const getRoleColor = (role: AppRole) => {
@@ -179,43 +175,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ stats }) => {
                     </div>
                     <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-primaryDark to-primary rounded-full" style={{ width: `${levelProgress}%` }}></div>
-                    </div>
-                </div>
-
-                {/* Achievements Section (Horizontal Scroll) */}
-                <div className="w-full mb-12">
-                    <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-6">
-                        <h3 className="text-[10px] font-black text-txt-dim uppercase tracking-[0.2em]">Achievements</h3>
-                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{(stats.badges || []).length} Badges</span>
-                    </div>
-
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
-                        {BADGES.map(badge => {
-                            const isUnlocked = (stats.badges || []).includes(badge.id);
-                            return (
-                                <div
-                                    key={badge.id}
-                                    className={`flex-shrink-0 w-20 flex flex-col items-center gap-2 transition-all ${isUnlocked ? 'opacity-100 scale-100' : 'opacity-20 grayscale scale-90'}`}
-                                >
-                                    <div className={`w-16 h-16 rounded-2xl bg-surface border flex items-center justify-center p-3 relative ${isUnlocked ? 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-white/5'}`}>
-                                        <OptimizedImage
-                                            src={badge.icon}
-                                            alt={badge.name}
-                                            className="w-full h-full"
-                                            imgClassName="object-contain"
-                                        />
-                                        {isUnlocked && (
-                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center border-2 border-background">
-                                                <Award size={8} className="text-white" fill="currentColor" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <span className="text-[8px] font-black text-white text-center uppercase tracking-tight leading-tight px-1 line-clamp-2">
-                                        {badge.name}
-                                    </span>
-                                </div>
-                            );
-                        })}
                     </div>
                 </div>
 

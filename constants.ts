@@ -142,10 +142,10 @@ export const COUNTRY_ACADEMIC_MAP: Record<string, {
 };
 
 export const MATERIALS: Material[] = [
-  { id: 'mat_scrap', name: 'Recycled Parts', rarity: 'Common', count: 0, image: '/assets/materials/mat_scrap.png' },
-  { id: 'mat_neon', name: 'Color Tube', rarity: 'Uncommon', count: 0, image: '/assets/materials/mat_neon.png' },
-  { id: 'mat_chip', name: 'Processing Chip', rarity: 'Rare', count: 0, image: '/assets/materials/mat_chip.png' },
-  { id: 'mat_core', name: 'Energy Source', rarity: 'Legendary', count: 0, image: '/assets/materials/mat_core.png' },
+  { id: 'mat_scrap', name: 'Recycled Parts', rarity: 'Common', count: 0, image: '/assets/icons/material_scrap.svg' },
+  { id: 'mat_neon', name: 'Color Tube', rarity: 'Uncommon', count: 0, image: '/assets/icons/material_neon.svg' },
+  { id: 'mat_chip', name: 'Processing Chip', rarity: 'Rare', count: 0, image: '/assets/icons/material_chip.svg' },
+  { id: 'mat_core', name: 'Energy Source', rarity: 'Legendary', count: 0, image: '/assets/icons/material_core.svg' },
 ];
 
 export const RECIPES: Recipe[] = [
@@ -213,76 +213,11 @@ export const MARKET_ITEMS: MarketItem[] = [
   {
     id: 'boost_xp',
     name: 'Experience Boost',
-    description: 'Earn 2x XP for 1 hour.',
+    description: 'Earn 2x points for 1 hour.',
     price: 50,
     category: 'powerup',
-    image: '/assets/items/boost_xp.png'
-  },
-  {
-    id: 'radar_plus',
-    name: 'Radar Booster',
-    description: 'Extends discovery range by 50% for 30 minutes.',
-    price: 75,
-    category: 'powerup',
-    image: '/assets/items/radar_plus.png'
-  },
-  {
-    id: 'streak_shield',
-    name: 'Streak Shield',
-    description: 'Protects your streak for one missed day.',
-    price: 100,
-    category: 'powerup',
-    image: '/assets/items/streak_shield.png'
-  },
-  {
-    id: 'influence_boost',
-    name: 'Influence Multiplier',
-    description: 'Double influence on your next 3 posts.',
-    price: 60,
-    category: 'powerup',
-    image: '/assets/items/influence_boost.png'
-  },
-  {
-    id: 'combat_stim',
-    name: 'Combat Stimulant',
-    description: 'Faster validation in competitive duels.',
-    price: 80,
-    category: 'powerup',
-    image: '/assets/items/combat_stim.png'
+    image: '/assets/icons/boost_xp.svg'
   }
 ];
 
 export const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 6000, 12000, 25000, 50000];
-
-export const BUFF_ICONS: Record<string, string> = {
-  'xp_multiplier': '/assets/buffs/xp_multiplier.png',
-  'radar_boost': '/assets/buffs/radar_boost.png',
-  'streak_shield': '/assets/buffs/streak_shield.png',
-  'influence_bonus': '/assets/buffs/influence_bonus.png',
-  'combat_stim': '/assets/buffs/combat_stim.png'
-};
-
-export const ROLE_ICONS: Record<string, string> = {
-  'Explorer': '/assets/roles/explorer.png',
-  'Competitor': '/assets/roles/competitor.png',
-  'Creator': '/assets/roles/creator.png',
-  'Student': '/assets/roles/student.png'
-};
-
-export const SKILL_ICONS: Record<string, string> = {
-  'sk_deep_scan': '/assets/skills/range_pulse.png',
-  'sk_adrenaline': '/assets/skills/arena_surge.png',
-  'sk_viral': '/assets/skills/influence_2x.png',
-  'sk_focus': '/assets/skills/range_pulse.png' // Placeholder until we generate study_link
-};
-
-export const BADGES = [
-  { id: 'first_steps', name: 'First Steps', description: 'Complete your first quest', icon: '/assets/badges/first_steps.png', requirement: 1 },
-  { id: 'quest_master', name: 'Quest Master', description: 'Complete 50 quests', icon: '/assets/badges/quest_master.png', requirement: 50 },
-  { id: 'social_butterfly', name: 'Social Butterfly', description: 'Make 10 friends', icon: '/assets/badges/social_butterfly.png', requirement: 10 },
-  { id: 'streak_keeper', name: 'Streak Keeper', description: 'Maintain a 7-day streak', icon: '/assets/badges/streak_keeper.png', requirement: 7 },
-  { id: 'treasure_hunter', name: 'Treasure Hunter', description: 'Find 25 rare artifacts', icon: '/assets/badges/treasure_hunter.png', requirement: 25 },
-  { id: 'team_player', name: 'Team Player', description: 'Complete 10 team missions', icon: '/assets/badges/team_player.png', requirement: 10 },
-  { id: 'scholar', name: 'Scholar', description: 'Earn 5000 Study XP', icon: '/assets/badges/scholar.png', requirement: 5000 },
-  { id: 'legend', name: 'Legend', description: 'Reach level 50', icon: '/assets/badges/legend.png', requirement: 50 }
-];

@@ -17,23 +17,23 @@ const STEPS: OnboardingStep[] = [
     title: "Discover Your World",
     description: "Turn your daily walk into an adventure. Find hidden gems and interesting items right in your neighborhood.",
     icon: <Compass size={40} className="text-white" />,
-    bgImage: "/assets/quests/daily_explorer.png",
-    gradient: "from-blue-600/80 via-indigo-600/40 to-transparent",
-    accent: "bg-blue-500"
+    bgImage: "https://images.unsplash.com/photo-1476610182048-b716b8518aae?auto=format&fit=crop&q=80&w=1200",
+    gradient: "from-orange-600/80 via-amber-600/40 to-transparent",
+    accent: "bg-orange-500"
   },
   {
     title: "Snap & Collect",
     description: "Use the smart lens to identify objects. Build your collection of discoveries and earn rewards.",
     icon: <Camera size={40} className="text-white" />,
-    bgImage: "/assets/quests/story_adventure.png",
-    gradient: "from-purple-600/80 via-fuchsia-600/40 to-transparent",
-    accent: "bg-purple-500"
+    bgImage: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1200",
+    gradient: "from-indigo-600/80 via-violet-600/40 to-transparent",
+    accent: "bg-indigo-500"
   },
   {
     title: "Play Together",
     description: "Join community teams, share your findings, and climb the local leaderboards.",
     icon: <Trophy size={40} className="text-white" />,
-    bgImage: "/assets/quests/team_coop.png",
+    bgImage: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1200",
     gradient: "from-emerald-600/80 via-teal-600/40 to-transparent",
     accent: "bg-emerald-500"
   }

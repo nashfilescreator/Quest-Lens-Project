@@ -38,7 +38,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ userStats, items, onBuy, onBa
             <div className="px-6 py-6">
                 <div className="h-56 rounded-[2.5rem] relative overflow-hidden group shadow-soft mb-8 border border-white/10">
                     <OptimizedImage
-                        src="https://image.pollinations.ai/prompt/vibrant%20colorful%20gift%20box%20abstract%20lifestyle?width=800&height=400&nologo=true"
+                        src="/assets/quests/bounty_rare.png"
                         className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                         alt="Featured"
                     />
@@ -88,10 +88,9 @@ const Marketplace: React.FC<MarketplaceProps> = ({ userStats, items, onBuy, onBa
                                     <OptimizedImage
                                         src={item.image}
                                         alt={item.name}
-                                        className="w-full h-full transition-all duration-700 group-hover:scale-110"
-                                        imgClassName="object-contain p-4"
+                                        className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 mix-blend-overlay"
                                     />
-                                    <div className={`absolute inset-0 opacity-5 ${isPowerup ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
+                                    <div className={`absolute inset-0 opacity-30 ${isPowerup ? 'bg-blue-500 mix-blend-color' : 'bg-purple-500 mix-blend-color'}`}></div>
 
                                     <div className="absolute top-3 right-3">
                                         {isOwned && (
@@ -120,8 +119,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ userStats, items, onBuy, onBa
                                             onClick={() => canAfford && onBuy(item)}
                                             disabled={!canAfford}
                                             className={`w-full py-3 font-black text-[10px] uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md ${canAfford
-                                                    ? 'bg-white text-slate-900 hover:bg-slate-100 active:scale-95'
-                                                    : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/5'
+                                                ? 'bg-white text-slate-900 hover:bg-slate-100 active:scale-95'
+                                                : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/5'
                                                 }`}
                                         >
                                             <Coins size={12} className={canAfford ? "text-amber-500 fill-amber-500" : "text-white/30"} />

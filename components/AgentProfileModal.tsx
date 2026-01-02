@@ -1,8 +1,7 @@
 
 import React from 'react';
-import { Award, X, UserPlus, Shield, MessageSquare, Swords, Check, UserMinus, Clock, UserX } from 'lucide-react';
+import { X, UserPlus, Shield, MessageSquare, Swords, Check, UserMinus, Clock, UserX } from 'lucide-react';
 import OptimizedImage from './OptimizedImage';
-import { BADGES } from '../constants';
 
 interface AgentProfileModalProps {
    agent: {
@@ -13,7 +12,6 @@ interface AgentProfileModalProps {
       xp: number;
       isFriend: boolean;
       isPending?: boolean;
-      badges?: string[];
    };
    onClose: () => void;
    onAddFriend: () => void;
@@ -68,34 +66,9 @@ const AgentProfileModal: React.FC<AgentProfileModalProps> = ({ agent, onClose, o
                   </div>
                   <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
                      <span className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Badges</span>
-                     <span className="font-mono text-sm font-bold text-yellow-500">{(agent.badges || []).length}</span>
+                     <span className="font-mono text-sm font-bold text-yellow-500">12</span>
                   </div>
                </div>
-
-               {/* Badges Display */}
-               {(agent.badges || []).length > 0 && (
-                  <div className="w-full mb-8">
-                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1">
-                        {BADGES.filter(b => (agent.badges || []).includes(b.id)).map(badge => (
-                           <div key={badge.id} className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center p-2 relative group/badge">
-                              <OptimizedImage
-                                 src={badge.icon}
-                                 alt={badge.name}
-                                 className="w-full h-full"
-                                 imgClassName="object-contain"
-                              />
-                              <div className="absolute -bottom-1 -right-1">
-                                 <Award size={10} className="text-yellow-500 fill-yellow-500" />
-                              </div>
-                              {/* Hover Tooltip */}
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-[8px] font-bold text-white rounded opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                                 {badge.name}
-                              </div>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-               )}
 
                <div className="w-full flex flex-col gap-3">
                   {agent.isFriend ? (
