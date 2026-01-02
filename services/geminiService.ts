@@ -28,7 +28,7 @@ export async function identifyDiscovery(base64Image: string): Promise<DiscoveryR
     XP should scale with rarity (50 to 500). Use warm, neighborhood-friendly language.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents: { parts: [imagePart, { text: prompt }] },
     config: {
       responseMimeType: "application/json",
@@ -91,7 +91,7 @@ export async function generateAIQuests(
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents: enhancedPrompt,
     config: {
       responseMimeType: "application/json",
@@ -131,14 +131,33 @@ export async function generateAIQuests(
 
   try {
     const data = JSON.parse(cleanJson(response.text) || "[]");
-    return data.map((q: any) => ({
-      ...q,
-      id: `ai-${Math.random().toString(36).substr(2, 9)}`,
-      coverImage: `https://image.pollinations.ai/prompt/${encodeURIComponent(q.imagePrompt + " high quality photography neighborhood " + region)}?width=800&height=450&nologo=true`,
-      currentStep: q.storyLine ? 1 : undefined,
-      steps: q.storyLine ? q.storyLine.length : 1,
-      storyLine: q.storyLine?.map((s: any) => ({ ...s, isCompleted: false, isLocked: s.id !== 1 }))
-    }));
+    return data.map((q: any) => {
+      let coverImage = '/assets/quests/daily_explorer.png';
+
+      const type = q.type as QuestType;
+      const roles = (q.roleTags || []) as AppRole[];
+
+      if (type === QuestType.STORY) coverImage = '/assets/quests/story_adventure.png';
+      else if (type === QuestType.COMMUNITY) coverImage = '/assets/quests/community_discovery.png';
+      else if (type === QuestType.COMPETITIVE) coverImage = '/assets/quests/competitive_battle.png';
+      else if (type === QuestType.TEAM) coverImage = '/assets/quests/team_coop.png';
+      else if (type === QuestType.BOUNTY) coverImage = '/assets/quests/bounty_rare.png';
+      else if (type === QuestType.DAILY) {
+        if (roles.includes('Student')) coverImage = '/assets/quests/daily_student.png';
+        else if (roles.includes('Competitor')) coverImage = '/assets/quests/daily_competitor.png';
+        else if (roles.includes('Creator')) coverImage = '/assets/quests/daily_creator.png';
+        else coverImage = '/assets/quests/daily_explorer.png';
+      }
+
+      return {
+        ...q,
+        id: `ai-${Math.random().toString(36).substr(2, 9)}`,
+        coverImage,
+        currentStep: q.storyLine ? 1 : undefined,
+        steps: q.storyLine ? q.storyLine.length : 1,
+        storyLine: q.storyLine?.map((s: any) => ({ ...s, isCompleted: false, isLocked: s.id !== 1 }))
+      };
+    });
   } catch (e) {
     return [];
   }
@@ -153,7 +172,7 @@ export async function findNearbyQuestLocations(lat: number, lng: number, topic: 
     Return a valid JSON array of Quest objects.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -180,14 +199,19 @@ export async function findNearbyQuestLocations(lat: number, lng: number, topic: 
 
   try {
     const data = JSON.parse(cleanJson(response.text) || "[]");
-    return data.map((q: any) => ({
-      ...q,
-      id: `loc-${Math.random().toString(36).substr(2, 9)}`,
-      type: q.type as QuestType,
-      difficulty: q.difficulty as QuestDifficulty,
-      location: { lat, lng },
-      coverImage: `https://image.pollinations.ai/prompt/${encodeURIComponent(q.imagePrompt + " bright outdoor scene neighborhood")}?width=800&height=450&nologo=true`
-    }));
+    return data.map((q: any) => {
+      let coverImage = '/assets/quests/community_discovery.png';
+      if (q.type === QuestType.BOUNTY) coverImage = '/assets/quests/bounty_rare.png';
+
+      return {
+        ...q,
+        id: `loc-${Math.random().toString(36).substr(2, 9)}`,
+        type: q.type as QuestType,
+        difficulty: q.difficulty as QuestDifficulty,
+        location: { lat, lng },
+        coverImage
+      };
+    });
   } catch (e) {
     return [];
   }
@@ -215,7 +239,7 @@ export async function validateQuestImage(
     Respond in JSON: success (bool), confidence (0-1), message (friendly feedback), detectedItems (string array).`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents: { parts: [imagePart, { text: prompt }] },
     config: {
       responseMimeType: "application/json",
@@ -245,7 +269,7 @@ export async function chatWithAssistant(message: string, history: any[] = []): P
   contents.push({ role: 'user', parts: [{ text: message }] });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents,
     config: {
       systemInstruction: "You are the Quest Lens Neighborhood Guide. Be warm, helpful, and professional. Avoid all sci-fi or technical jargon. Use Google Search to provide interesting facts about discoveries.",

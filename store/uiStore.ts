@@ -27,12 +27,12 @@ interface UIState {
 
   // Modal states
   activeModals: Set<ModalType>;
-  
+
   // Contextual data for modals
   inspectedAgent: any | null;
   activeChat: Friend | null;
   activeToast: Notification | null;
-  
+
   isCameraOpen: boolean;
   isTeamContribution: boolean;
 
@@ -41,14 +41,14 @@ interface UIState {
   goBack: () => void;
   openModal: (type: ModalType, context?: any) => void;
   closeModal: (type: ModalType) => void;
-  
+
   setActiveQuest: (quest: Quest | null) => void;
   setActiveStoryStep: (step: StoryStep | null) => void;
   setCompletionData: (data: any | null) => void;
   setDiscoveryContext: (context: { image: string, title: string } | null) => void;
   setEditingQuest: (quest: Quest | null) => void;
   setScannerMode: (mode: 'quest' | 'free') => void;
-  
+
   openCamera: (isTeam?: boolean) => void;
   closeCamera: () => void;
   setIsCameraOpen: (isOpen: boolean) => void;
@@ -88,7 +88,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       };
     });
   },
-  
+
   goBack: () => {
     const { returnView } = get();
     set({ view: returnView });
@@ -104,7 +104,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       return updates;
     });
   },
-  
+
   closeModal: (type) => {
     set(state => {
       const newModals = new Set<ModalType>(state.activeModals);
@@ -132,6 +132,6 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   setToast: (toast) => {
     set({ activeToast: toast });
-    if(toast) setTimeout(() => set({ activeToast: null }), 3000);
+    if (toast) setTimeout(() => set({ activeToast: null }), 3000);
   }
 }));

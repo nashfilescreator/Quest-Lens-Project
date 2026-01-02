@@ -185,7 +185,7 @@ function GameContent() {
     }
   }, [view, isTeamContribution, contributeToTeamMission, reportVictory, scannerMode, activeQuest, activeStoryStep, processQuestCompletion, handleDiscovery, closeModal, setIsCameraOpen, setIsTeamContribution, setCompletionData, setToast, openModal]);
 
-  const isFullScreenView = useMemo(() => ['oracle', 'ar-lens', 'duel', 'scanner', 'edit-profile', 'role-selection', 'region-selection', 'team-chat', 'create'].includes(view), [view]);
+  const isFullScreenView = useMemo(() => ['onboarding', 'auth', 'oracle', 'ar-lens', 'duel', 'scanner', 'edit-profile', 'role-selection', 'region-selection', 'team-chat', 'create'].includes(view), [view]);
   const showBottomBar = useMemo(() => !isFullScreenView && !['active-quest', 'story-path', 'team', 'settings', 'create', 'market', 'journal', 'my-quests'].includes(view), [isFullScreenView, view]);
 
   return (
