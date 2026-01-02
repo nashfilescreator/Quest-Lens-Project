@@ -28,7 +28,7 @@ export async function identifyDiscovery(base64Image: string): Promise<DiscoveryR
     XP should scale with rarity (50 to 500). Use warm, neighborhood-friendly language.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3-flash-preview',
     contents: { parts: [imagePart, { text: prompt }] },
     config: {
       responseMimeType: "application/json",
@@ -91,7 +91,7 @@ export async function generateAIQuests(
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3-flash-preview',
     contents: enhancedPrompt,
     config: {
       responseMimeType: "application/json",
@@ -153,7 +153,7 @@ export async function findNearbyQuestLocations(lat: number, lng: number, topic: 
     Return a valid JSON array of Quest objects.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3-flash-preview',
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -215,7 +215,7 @@ export async function validateQuestImage(
     Respond in JSON: success (bool), confidence (0-1), message (friendly feedback), detectedItems (string array).`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3-flash-preview',
     contents: { parts: [imagePart, { text: prompt }] },
     config: {
       responseMimeType: "application/json",
@@ -245,7 +245,7 @@ export async function chatWithAssistant(message: string, history: any[] = []): P
   contents.push({ role: 'user', parts: [{ text: message }] });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3-flash-preview',
     contents,
     config: {
       systemInstruction: "You are the Quest Lens Neighborhood Guide. Be warm, helpful, and professional. Avoid all sci-fi or technical jargon. Use Google Search to provide interesting facts about discoveries.",
@@ -269,7 +269,7 @@ export async function chatWithAssistant(message: string, history: any[] = []): P
 export async function speakResponse(text: string): Promise<ArrayBuffer | undefined> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash", // TTS can be performed by multimodal 1.5-flash
+    model: "gemini-3-flash-preview", // TTS can be performed by multimodal 3-flash-preview
     contents: [{ parts: [{ text }] }],
     config: {
       responseModalities: [Modality.AUDIO],

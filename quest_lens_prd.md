@@ -58,9 +58,9 @@ QUEST LENS is an AI-native mobile exploration platform that transforms the physi
 ### 5.1. Tech Stack
 *   **Frontend:** React (Web/PWA) / Flutter (Native Mobile Target).
 *   **AI Engine:** Google Gemini SDK (`@google/genai`).
-    *   `gemini-1.5-flash`: General logic, JSON extraction, and analysis.
+    *   `gemini-3-flash-preview`: General logic, JSON extraction, and analysis.
     *   `gemini-2.0-flash-exp`: Advanced reasoning and high-speed multimodal (if available).
-    *   `gemini-1.5-flash`: Speech synthesis and multimodal feedback.
+    *   `gemini-3-flash-preview`: Speech synthesis and multimodal feedback.
 *   **Assets:** Pollinations AI (Dynamic Quest covers), DiceBear (Avatars).
 
 ### 5.2. Data Model
