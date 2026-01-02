@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import {
   UserStats, AppSettings, Quest, MarketItem, Recipe, ActiveBuff, DiscoveryResult, Skill
 } from '../types';
-import { INITIAL_STATS, INITIAL_SETTINGS, MARKET_ITEMS } from '../constants';
+import { INITIAL_STATS, INITIAL_SETTINGS, MARKET_ITEMS, BUFF_ICONS } from '../constants';
 import { useQuestSystem } from './useQuestSystem';
 import { useSocialSystem } from './useSocialSystem';
 import { playSound } from '../services/audioService';
@@ -156,7 +156,7 @@ export const useGameLogic = (settings: AppSettings) => {
     let newBuff: ActiveBuff | null = null;
     if (itemId === 'boost_xp') {
       newBuff = {
-        id: `buff-${Date.now()}`, name: "Double XP", type: 'xp_multiplier', value: 2.0, expiresAt: Date.now() + (3600 * 1000), icon: 'Zap'
+        id: `buff-${Date.now()}`, name: "Double XP", type: 'xp_multiplier', value: 2.0, expiresAt: Date.now() + (3600 * 1000), icon: BUFF_ICONS['xp_multiplier'] || '/assets/buffs/xp_multiplier.png'
       };
     }
 
